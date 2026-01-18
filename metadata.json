@@ -1,0 +1,5 @@
+{
+  "name": "Copy of Teacher Command Center",
+  "description": "A comprehensive dashboard for Computer Science teachers to manage classes, attendance, grades, and generate AI-powered student feedback.",
+  "requestFramePermissions": []
+}
