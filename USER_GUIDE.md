@@ -1,10 +1,10 @@
-# Teacher Command Center - User Guide
+# Boundaries - User Guide
 
-Welcome to the **Teacher Command Center**, your modern, all-in-one dashboard for efficiently managing your classroom. This guide will help you get up and running with all the features available to you.
+Welcome to **Boundaries**, your modern, all-in-one dashboard for efficiently managing your classroom. This guide will help you get up and running with all the features available to you.
 
 ## 👋 Introduction
 
-The Teacher Command Center is designed to streamline your daily tasks, from taking attendance to planning lessons and grading exams. It runs right in your browser and syncs your data securely to the cloud.
+**Boundaries** is designed to streamline your daily tasks, from taking attendance to planning lessons and grading exams. It runs right in your browser and syncs your data securely to the cloud.
 
 **Key Interface Features:**
 *   **Sidebar Navigation**: Access all modules (Dashboard, Classes, Gradebook, etc.) from the left menu.

@@ -1,4 +1,4 @@
-# Teacher Command Center - Rebuild Guide
+# Boundaries - Rebuild Guide
 
 A comprehensive teacher management web application built with **React**, **TypeScript**, **Vite**, and **Supabase**.
 

@@ -67,7 +67,7 @@ const App: React.FC = () => {
               >
                 <Menu size={24} />
               </button>
-              <span className="font-bold text-indigo-600 dark:text-blue-400 font-mono">DEV.TEACH_</span>
+              <span className="font-bold text-indigo-600 dark:text-indigo-400">Boundaries</span>
             </div>
           )}
 

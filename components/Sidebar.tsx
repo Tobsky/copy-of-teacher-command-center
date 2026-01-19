@@ -60,8 +60,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       `}>
         <div className="p-6 flex justify-between items-center">
           <div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent font-mono tracking-tighter">
-              DEV.TEACH_
+            <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent tracking-tighter">
+              Boundaries
             </h1>
             <p className="text-[10px] text-slate-400 font-medium tracking-wide uppercase mt-1">Command Center v1.0</p>
           </div>
