@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { Mail, Lock, Loader2, AlertCircle, ArrowRight } from 'lucide-react';
 
 const AuthPage: React.FC = () => {
+    const [searchParams] = useSearchParams();
+    const mode = searchParams.get('mode');
+
     const [loading, setLoading] = useState(false);
-    const [isLogin, setIsLogin] = useState(true);
+    const [isLogin, setIsLogin] = useState(mode !== 'signup');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [fullName, setFullName] = useState(''); // Only for signup
@@ -143,6 +147,11 @@ const AuthPage: React.FC = () => {
                     >
                         {isLogin ? 'Sign up' : 'Log in'}
                     </button>
+
+                    {/* Back to Home Link */}
+                    <div className="mt-6">
+                        <a href="/" className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 text-xs transition-colors">← Back to Home</a>
+                    </div>
                 </div>
             </div>
         </div>
