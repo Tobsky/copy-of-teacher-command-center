@@ -63,6 +63,19 @@
       transition: background-color 0.3s ease, color 0.3s ease;
     }
 
+    /* Global smooth transition for theme switching */
+    /* Target common elements to ensure they animate color changes */
+    *,
+    *::before,
+    *::after {
+      transition-property: background-color, border-color, color, fill, stroke;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      transition-duration: 300ms;
+    }
+
+    /* Respect existing transform/opacity transitions by letting specific classes override via cascade if needed, 
+       but for elements without classes, this provides the smoothing. */
+
     /* Custom scrollbar for coding vibe */
     ::-webkit-scrollbar {
       width: 8px;
