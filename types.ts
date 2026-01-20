@@ -71,6 +71,17 @@ export interface Lesson {
   content: string;
   resources: LessonResource[];
   classId?: string;
+  syllabusTopicId?: string;
+}
+
+export interface SyllabusTopic {
+  id: string;
+  userId: string;
+  classId: string;
+  title: string;
+  semester: 'Semester 1' | 'Semester 2';
+  isCompleted: boolean;
+  createdAt?: string;
 }
 
 export enum AppView {
@@ -80,7 +91,8 @@ export enum AppView {
   GRADEBOOK = 'GRADEBOOK',
   SNIPPETS = 'SNIPPETS',
   FEEDBACK = 'FEEDBACK',
-  CURVING = 'CURVING'
+  CURVING = 'CURVING',
+  SYLLABUS = 'SYLLABUS'
 }
 
 // --- Grade Curving Types ---

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '../supabaseClient';
 import { toCamelCase, toSnakeCase } from '../utils/mapper';
-import { ClassGroup, Student, Assignment, Grade, AttendanceRecord, Snippet, Todo, Lesson, AppView, ExamBoard } from '../types';
+import { ClassGroup, Student, Assignment, Grade, AttendanceRecord, Snippet, Todo, Lesson, AppView, ExamBoard, SyllabusTopic } from '../types';
 
 interface AppContextType {
   currentView: AppView; // Kept for types but unused by router
@@ -15,6 +15,7 @@ interface AppContextType {
   todos: Todo[];
   lessons: Lesson[];
   examBoards: ExamBoard[];
+  syllabusTopics: SyllabusTopic[];
 
   loading: boolean;
 
@@ -52,6 +53,11 @@ interface AppContextType {
   fetchTodos: () => Promise<void>;
   fetchLessons: () => Promise<void>;
   fetchExamBoards: () => Promise<void>;
+  fetchSyllabusTopics: () => Promise<void>;
+
+  addSyllabusTopic: (topic: Omit<SyllabusTopic, 'id'>) => Promise<void>;
+  updateSyllabusTopic: (topic: SyllabusTopic) => Promise<void>;
+  deleteSyllabusTopic: (id: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -69,6 +75,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [todos, setTodos] = useState<Todo[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [examBoards, setExamBoards] = useState<ExamBoard[]>([]);
+  const [syllabusTopics, setSyllabusTopics] = useState<SyllabusTopic[]>([]);
   const [session, setSession] = useState<any>(null);
 
   // Auth
@@ -90,6 +97,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setTodos([]);
         setLessons([]);
         setExamBoards([]);
+        setSyllabusTopics([]);
         setLoading(false);
       }
     });
@@ -141,6 +149,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const fetchExamBoards = async () => {
     const { data } = await supabase.from('exam_boards').select('*');
     if (data) setExamBoards(toCamelCase(data));
+  };
+
+  const fetchSyllabusTopics = async () => {
+    const { data } = await supabase.from('syllabus_topics').select('*');
+    if (data) setSyllabusTopics(toCamelCase(data));
   };
 
 
@@ -388,12 +401,35 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setTodos([]);
     setLessons([]);
     setExamBoards([]);
+    setSyllabusTopics([]);
+  };
+
+  // --- Syllabus Topic Actions ---
+  const addSyllabusTopic = async (topic: Omit<SyllabusTopic, 'id'>) => {
+    if (!session) return;
+    const { data, error } = await supabase.from('syllabus_topics').insert([
+      toSnakeCase({ ...topic, userId: session.user.id })
+    ]).select();
+    if (data) setSyllabusTopics([...syllabusTopics, toCamelCase(data[0])]);
+    if (error) console.error(error);
+  };
+
+  const updateSyllabusTopic = async (updated: SyllabusTopic) => {
+    const { error } = await supabase.from('syllabus_topics').update(
+      toSnakeCase(updated)
+    ).eq('id', updated.id);
+    if (!error) setSyllabusTopics(syllabusTopics.map(t => t.id === updated.id ? updated : t));
+  };
+
+  const deleteSyllabusTopic = async (id: string) => {
+    const { error } = await supabase.from('syllabus_topics').delete().eq('id', id);
+    if (!error) setSyllabusTopics(syllabusTopics.filter(t => t.id !== id));
   };
 
   return (
     <AppContext.Provider value={{
       currentView, setCurrentView,
-      classes, students, assignments, grades, attendance, snippets, todos, lessons, examBoards,
+      classes, students, assignments, grades, attendance, snippets, todos, lessons, examBoards, syllabusTopics,
       loading,
       addClass, updateClass, deleteClass, addStudent, deleteStudent,
       addAssignment, updateAssignment, deleteAssignment,
@@ -401,7 +437,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       toggleTodo, addTodo, deleteTodo, logout,
       addLesson, updateLesson, deleteLesson,
       addExamBoard, updateExamBoard, deleteExamBoard, restoreDefaultExamBoards,
-      fetchClasses, fetchStudents, fetchAssignments, fetchGrades, fetchAttendance, fetchSnippets, fetchTodos, fetchLessons, fetchExamBoards
+      addSyllabusTopic, updateSyllabusTopic, deleteSyllabusTopic,
+      fetchClasses, fetchStudents, fetchAssignments, fetchGrades, fetchAttendance, fetchSnippets, fetchTodos, fetchLessons, fetchExamBoards, fetchSyllabusTopics
     }}>
       {children}
     </AppContext.Provider>

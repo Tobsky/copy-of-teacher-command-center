@@ -299,3 +299,43 @@ on public.exam_boards for delete
 using (auth.uid() = user_id);
 
 create index idx_exam_boards_user_id on public.exam_boards(user_id);
+
+-- ============================================================
+-- 10. SYLLABUS TOPICS TABLE
+-- ============================================================
+create table public.syllabus_topics (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users not null,
+  class_id uuid references public.classes(id) on delete cascade not null,
+  title text not null,
+  semester text not null check (semester in ('Semester 1', 'Semester 2')),
+  is_completed boolean default false,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table public.syllabus_topics enable row level security;
+
+create policy "Users can view their own syllabus topics"
+on public.syllabus_topics for select
+using (auth.uid() = user_id);
+
+create policy "Users can insert their own syllabus topics"
+on public.syllabus_topics for insert
+with check (auth.uid() = user_id);
+
+create policy "Users can update their own syllabus topics"
+on public.syllabus_topics for update
+using (auth.uid() = user_id);
+
+create policy "Users can delete their own syllabus topics"
+on public.syllabus_topics for delete
+using (auth.uid() = user_id);
+
+create index idx_syllabus_topics_class_id on public.syllabus_topics(class_id);
+create index idx_syllabus_topics_user_id on public.syllabus_topics(user_id);
+
+-- ============================================================
+-- 11. UPDATE LESSONS TABLE - Add syllabus_topic_id
+-- ============================================================
+alter table public.lessons add column syllabus_topic_id uuid references public.syllabus_topics(id) on delete set null;
+create index idx_lessons_syllabus_topic_id on public.lessons(syllabus_topic_id);
