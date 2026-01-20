@@ -19,12 +19,14 @@ const Gradebook: React.FC = () => {
   const [showAddAssign, setShowAddAssign] = useState(false);
   const [newAssignTitle, setNewAssignTitle] = useState('');
   const [newAssignPoints, setNewAssignPoints] = useState('100');
+  const [newAssignDate, setNewAssignDate] = useState(new Date().toISOString().split('T')[0]);
 
   // Edit Assignment State
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
   const [editAssignTitle, setEditAssignTitle] = useState('');
   const [editAssignPoints, setEditAssignPoints] = useState('');
   const [editAssignCompleted, setEditAssignCompleted] = useState(false);
+  const [editAssignDate, setEditAssignDate] = useState('');
 
   // Student Detail Modal State
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -62,15 +64,16 @@ const Gradebook: React.FC = () => {
 
   const handleAddAssignment = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newAssignTitle && newAssignPoints) {
+    if (newAssignTitle && newAssignPoints && newAssignDate) {
       addAssignment({
         classId: selectedClassId,
         title: newAssignTitle,
         maxPoints: parseInt(newAssignPoints),
-        date: new Date().toISOString().split('T')[0],
+        date: newAssignDate,
         completed: false
       });
       setNewAssignTitle('');
+      setNewAssignDate(new Date().toISOString().split('T')[0]);
       setShowAddAssign(false);
     }
   };
@@ -80,15 +83,17 @@ const Gradebook: React.FC = () => {
     setEditAssignTitle(assignment.title);
     setEditAssignPoints(assignment.maxPoints.toString());
     setEditAssignCompleted(assignment.completed);
+    setEditAssignDate(assignment.date);
   };
 
   const handleUpdateAssignment = (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingAssignment && editAssignTitle && editAssignPoints) {
+    if (editingAssignment && editAssignTitle && editAssignPoints && editAssignDate) {
       updateAssignment({
         ...editingAssignment,
         title: editAssignTitle,
         maxPoints: parseInt(editAssignPoints),
+        date: editAssignDate,
         completed: editAssignCompleted
       });
       setEditingAssignment(null);
@@ -250,6 +255,15 @@ const Gradebook: React.FC = () => {
                 className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all placeholder-slate-400"
               />
             </div>
+            <div className="w-48">
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Date</label>
+              <input
+                type="date"
+                value={newAssignDate}
+                onChange={e => setNewAssignDate(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all"
+              />
+            </div>
             <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl text-sm font-bold shadow-lg shadow-blue-600/20 hover:shadow-blue-600/40 transition-all hover:scale-[1.02] active:scale-[0.98]">
               Create Assignment
             </button>
@@ -375,6 +389,11 @@ const Gradebook: React.FC = () => {
                   className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all placeholder-slate-400"
                 />
               </div>
+              {editingAssignment.createdAt && (
+                <div className="text-xs text-slate-400 dark:text-slate-500">
+                  Created: {new Date(editingAssignment.createdAt).toLocaleString()}
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-5">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Max Points</label>
@@ -385,17 +404,26 @@ const Gradebook: React.FC = () => {
                     className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all placeholder-slate-400"
                   />
                 </div>
-                <div className="flex flex-col justify-end">
-                  <label className="flex items-center gap-3 cursor-pointer p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                    <input
-                      type="checkbox"
-                      checked={editAssignCompleted}
-                      onChange={e => setEditAssignCompleted(e.target.checked)}
-                      className="w-5 h-5 rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 bg-white dark:bg-slate-800"
-                    />
-                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200 select-none">Completed</span>
-                  </label>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Date</label>
+                  <input
+                    type="date"
+                    value={editAssignDate}
+                    onChange={e => setEditAssignDate(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all"
+                  />
                 </div>
+              </div>
+              <div>
+                <label className="flex items-center gap-3 cursor-pointer p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={editAssignCompleted}
+                    onChange={e => setEditAssignCompleted(e.target.checked)}
+                    className="w-5 h-5 rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 bg-white dark:bg-slate-800"
+                  />
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-200 select-none">Completed</span>
+                </label>
               </div>
 
               <div className="flex gap-4 pt-4 border-t border-slate-100 dark:border-slate-700">

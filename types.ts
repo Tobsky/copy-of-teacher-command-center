@@ -21,6 +21,7 @@ export interface Assignment {
   completed: boolean;
   category?: string; // e.g., "Homework", "Quiz", "Exam"
   weight?: string; // e.g., "20%"
+  createdAt?: string; // ISO timestamp from DB
 }
 
 export interface Grade {
