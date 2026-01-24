@@ -12,7 +12,7 @@ import SmartFeedback from './components/SmartFeedback';
 import LessonPlanner from './components/LessonPlanner';
 import GradeCurving from './components/GradeCurving';
 import LandingPage from './components/LandingPage';
-import SyllabusTracker from './components/SyllabusTracker';
+import SyllabusHub from './components/SyllabusHub';
 import { ThemeProvider } from './context/ThemeContext';
 import { Menu } from 'lucide-react';
 
@@ -84,7 +84,7 @@ const App: React.FC = () => {
             <Route path="/gradebook" element={session ? <Gradebook /> : <Navigate to="/login" replace />} />
             <Route path="/curving" element={session ? <GradeCurving /> : <Navigate to="/login" replace />} />
             <Route path="/planner" element={session ? <LessonPlanner /> : <Navigate to="/login" replace />} />
-            <Route path="/syllabus" element={session ? <SyllabusTracker /> : <Navigate to="/login" replace />} />
+            <Route path="/syllabus" element={session ? <SyllabusHub /> : <Navigate to="/login" replace />} />
             <Route path="/snippets" element={session ? <SnippetBank /> : <Navigate to="/login" replace />} />
             <Route path="/feedback" element={session ? <SmartFeedback /> : <Navigate to="/login" replace />} />
 

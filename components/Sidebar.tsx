@@ -35,7 +35,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     { path: '/gradebook', label: 'Gradebook', icon: <GraduationCap size={20} /> },
     { path: '/curving', label: 'Grade Curving', icon: <Calculator size={20} /> },
     { path: '/planner', label: 'Lesson Planner', icon: <BookOpen size={20} /> },
-    { path: '/syllabus', label: 'Syllabus Tracker', icon: <ClipboardCheck size={20} /> },
+    { path: '/syllabus', label: 'Syllabus Hub', icon: <ClipboardCheck size={20} /> },
     { path: '/snippets', label: 'Snippet Bank', icon: <Code2 size={20} /> },
     { path: '/feedback', label: 'Smart Feedback', icon: <Sparkles size={20} /> },
   ];

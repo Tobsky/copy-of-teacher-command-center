@@ -5,11 +5,13 @@ import { Lesson, LessonResource, ResourceType } from '../types';
 import { generateLessonPlan } from '../services/geminiService';
 
 const LessonPlanner: React.FC = () => {
-    const { lessons, classes, syllabusTopics, addLesson, updateLesson, deleteLesson, updateSyllabusTopic, fetchLessons, fetchSyllabusTopics } = useAppContext();
+    const { lessons, classes, syllabusTopics, curriculums, addLesson, updateLesson, deleteLesson, fetchLessons, fetchSyllabusTopics, fetchClasses, fetchCurriculums } = useAppContext();
 
     useEffect(() => {
         fetchLessons();
         fetchSyllabusTopics();
+        fetchClasses();
+        fetchCurriculums();
     }, []);
 
     const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -22,7 +24,6 @@ const LessonPlanner: React.FC = () => {
     const [classId, setClassId] = useState('');
     const [resources, setResources] = useState<LessonResource[]>([]);
     const [syllabusTopicId, setSyllabusTopicId] = useState('');
-    const [markTopicCompleted, setMarkTopicCompleted] = useState(false);
 
     // Resource Input State
     const [resType, setResType] = useState<ResourceType>('link');
@@ -48,7 +49,6 @@ const LessonPlanner: React.FC = () => {
         setClassId(lesson.classId || '');
         setResources(lesson.resources || []);
         setSyllabusTopicId(lesson.syllabusTopicId || '');
-        setMarkTopicCompleted(false);
         setSelectedDate(lesson.date);
         setShowForm(true);
     };
@@ -59,7 +59,6 @@ const LessonPlanner: React.FC = () => {
         setClassId('');
         setResources([]);
         setSyllabusTopicId('');
-        setMarkTopicCompleted(false);
         setEditingLesson(null);
         setResLabel('');
         setResUrl('');
@@ -118,14 +117,6 @@ const LessonPlanner: React.FC = () => {
             await updateLesson({ ...editingLesson, ...payload });
         } else {
             await addLesson(payload);
-        }
-
-        // Mark topic as completed if toggled
-        if (markTopicCompleted && syllabusTopicId) {
-            const topic = syllabusTopics.find(t => t.id === syllabusTopicId);
-            if (topic && !topic.isCompleted) {
-                await updateSyllabusTopic({ ...topic, isCompleted: true });
-            }
         }
 
         resetForm();
@@ -345,29 +336,18 @@ const LessonPlanner: React.FC = () => {
                                             className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all appearance-none cursor-pointer"
                                         >
                                             <option value="">-- No Topic Linked --</option>
-                                            {syllabusTopics.filter(t => t.classId === classId).map(t => (
-                                                <option key={t.id} value={t.id}>{t.title} ({t.semester})</option>
-                                            ))}
+                                            {(() => {
+                                                const selectedClass = classes.find(c => c.id === classId);
+                                                const curriculumId = selectedClass?.curriculumId;
+                                                return syllabusTopics.filter(t => t.curriculumId === curriculumId).map(t => (
+                                                    <option key={t.id} value={t.id}>{t.title} ({t.semester})</option>
+                                                ));
+                                            })()}
                                         </select>
                                         <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                                             <ChevronRight size={16} className="rotate-90" />
                                         </div>
                                     </div>
-                                </div>
-                            )}
-
-                            {/* Mark Topic as Completed Toggle */}
-                            {syllabusTopicId && (
-                                <div>
-                                    <label className="flex items-center gap-3 cursor-pointer p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-900/30 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors">
-                                        <input
-                                            type="checkbox"
-                                            checked={markTopicCompleted}
-                                            onChange={e => setMarkTopicCompleted(e.target.checked)}
-                                            className="w-5 h-5 rounded border-emerald-300 dark:border-emerald-600 text-emerald-600 focus:ring-emerald-500 bg-white dark:bg-slate-800"
-                                        />
-                                        <span className="text-sm font-bold text-emerald-700 dark:text-emerald-400 select-none">Mark Topic as Completed on Save</span>
-                                    </label>
                                 </div>
                             )}
 

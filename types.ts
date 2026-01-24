@@ -3,6 +3,7 @@ export interface ClassGroup {
   name: string;
   section: string;
   schedule: string;
+  curriculumId?: string | null;
 }
 
 export interface Student {
@@ -77,11 +78,30 @@ export interface Lesson {
 export interface SyllabusTopic {
   id: string;
   userId: string;
-  classId: string;
+  curriculumId: string;
   title: string;
   semester: 'Semester 1' | 'Semester 2';
-  isCompleted: boolean;
+  orderIndex: number;
   createdAt?: string;
+}
+
+export interface Curriculum {
+  id: string;
+  userId: string;
+  name: string;
+  boardCode?: string;
+  createdAt?: string;
+}
+
+export type SyllabusStatus = 'not_started' | 'taught' | 'assessed' | 'completed';
+
+export interface SyllabusProgress {
+  id: string;
+  userId: string;
+  classId: string;
+  topicId: string;
+  status: SyllabusStatus;
+  updatedAt?: string;
 }
 
 export enum AppView {

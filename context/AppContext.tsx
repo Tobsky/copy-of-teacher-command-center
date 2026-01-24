@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '../supabaseClient';
 import { toCamelCase, toSnakeCase } from '../utils/mapper';
-import { ClassGroup, Student, Assignment, Grade, AttendanceRecord, Snippet, Todo, Lesson, AppView, ExamBoard, SyllabusTopic } from '../types';
+import { ClassGroup, Student, Assignment, Grade, AttendanceRecord, Snippet, Todo, Lesson, AppView, ExamBoard, SyllabusTopic, Curriculum, SyllabusProgress } from '../types';
 
 interface AppContextType {
   currentView: AppView; // Kept for types but unused by router
@@ -16,6 +16,8 @@ interface AppContextType {
   lessons: Lesson[];
   examBoards: ExamBoard[];
   syllabusTopics: SyllabusTopic[];
+  curriculums: Curriculum[];
+  syllabusProgress: SyllabusProgress[];
 
   loading: boolean;
 
@@ -58,6 +60,14 @@ interface AppContextType {
   addSyllabusTopic: (topic: Omit<SyllabusTopic, 'id'>) => Promise<void>;
   updateSyllabusTopic: (topic: SyllabusTopic) => Promise<void>;
   deleteSyllabusTopic: (id: string) => Promise<void>;
+
+  fetchCurriculums: () => Promise<void>;
+  addCurriculum: (curriculum: Omit<Curriculum, 'id'>) => Promise<Curriculum | null>;
+  updateCurriculum: (curriculum: Curriculum) => Promise<void>;
+  deleteCurriculum: (id: string) => Promise<void>;
+
+  fetchSyllabusProgress: () => Promise<void>;
+  upsertSyllabusProgress: (progress: Omit<SyllabusProgress, 'id'>) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -76,6 +86,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [examBoards, setExamBoards] = useState<ExamBoard[]>([]);
   const [syllabusTopics, setSyllabusTopics] = useState<SyllabusTopic[]>([]);
+  const [curriculums, setCurriculums] = useState<Curriculum[]>([]);
+  const [syllabusProgress, setSyllabusProgress] = useState<SyllabusProgress[]>([]);
   const [session, setSession] = useState<any>(null);
 
   // Auth
@@ -98,6 +110,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setLessons([]);
         setExamBoards([]);
         setSyllabusTopics([]);
+        setCurriculums([]);
+        setSyllabusProgress([]);
         setLoading(false);
       }
     });
@@ -154,6 +168,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const fetchSyllabusTopics = async () => {
     const { data } = await supabase.from('syllabus_topics').select('*');
     if (data) setSyllabusTopics(toCamelCase(data));
+  };
+
+  const fetchCurriculums = async () => {
+    const { data } = await supabase.from('curriculums').select('*');
+    if (data) setCurriculums(toCamelCase(data));
+  };
+
+  const fetchSyllabusProgress = async () => {
+    const { data } = await supabase.from('syllabus_progress').select('*');
+    if (data) setSyllabusProgress(toCamelCase(data));
   };
 
 
@@ -402,6 +426,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setLessons([]);
     setExamBoards([]);
     setSyllabusTopics([]);
+    setCurriculums([]);
+    setSyllabusProgress([]);
   };
 
   // --- Syllabus Topic Actions ---
@@ -426,10 +452,56 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (!error) setSyllabusTopics(syllabusTopics.filter(t => t.id !== id));
   };
 
+  // --- Curriculum Actions ---
+  const addCurriculum = async (curriculum: Omit<Curriculum, 'id'>): Promise<Curriculum | null> => {
+    if (!session) return null;
+    const { data, error } = await supabase.from('curriculums').insert([
+      toSnakeCase({ ...curriculum, userId: session.user.id })
+    ]).select();
+    if (data) {
+      const newCurriculum = toCamelCase(data[0]);
+      setCurriculums([...curriculums, newCurriculum]);
+      return newCurriculum;
+    }
+    if (error) console.error(error);
+    return null;
+  };
+
+  const updateCurriculum = async (updated: Curriculum) => {
+    const { error } = await supabase.from('curriculums').update(
+      toSnakeCase(updated)
+    ).eq('id', updated.id);
+    if (!error) setCurriculums(curriculums.map(c => c.id === updated.id ? updated : c));
+  };
+
+  const deleteCurriculum = async (id: string) => {
+    const { error } = await supabase.from('curriculums').delete().eq('id', id);
+    if (!error) setCurriculums(curriculums.filter(c => c.id !== id));
+  };
+
+  // --- Syllabus Progress Actions ---
+  const upsertSyllabusProgress = async (progress: Omit<SyllabusProgress, 'id'>) => {
+    if (!session) return;
+    const payload = toSnakeCase({ ...progress, userId: session.user.id });
+    const { data, error } = await supabase.from('syllabus_progress').upsert(payload, { onConflict: 'class_id, topic_id' }).select();
+    if (data && !error) {
+      const newProgress = toCamelCase(data[0]);
+      setSyllabusProgress(prev => {
+        const idx = prev.findIndex(p => p.classId === newProgress.classId && p.topicId === newProgress.topicId);
+        if (idx >= 0) {
+          const next = [...prev];
+          next[idx] = newProgress;
+          return next;
+        }
+        return [...prev, newProgress];
+      });
+    }
+  };
+
   return (
     <AppContext.Provider value={{
       currentView, setCurrentView,
-      classes, students, assignments, grades, attendance, snippets, todos, lessons, examBoards, syllabusTopics,
+      classes, students, assignments, grades, attendance, snippets, todos, lessons, examBoards, syllabusTopics, curriculums, syllabusProgress,
       loading,
       addClass, updateClass, deleteClass, addStudent, deleteStudent,
       addAssignment, updateAssignment, deleteAssignment,
@@ -438,7 +510,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       addLesson, updateLesson, deleteLesson,
       addExamBoard, updateExamBoard, deleteExamBoard, restoreDefaultExamBoards,
       addSyllabusTopic, updateSyllabusTopic, deleteSyllabusTopic,
-      fetchClasses, fetchStudents, fetchAssignments, fetchGrades, fetchAttendance, fetchSnippets, fetchTodos, fetchLessons, fetchExamBoards, fetchSyllabusTopics
+      addCurriculum, updateCurriculum, deleteCurriculum,
+      upsertSyllabusProgress,
+      fetchClasses, fetchStudents, fetchAssignments, fetchGrades, fetchAttendance, fetchSnippets, fetchTodos, fetchLessons, fetchExamBoards, fetchSyllabusTopics, fetchCurriculums, fetchSyllabusProgress
     }}>
       {children}
     </AppContext.Provider>
