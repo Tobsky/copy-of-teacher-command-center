@@ -82,6 +82,8 @@ export interface SyllabusTopic {
   title: string;
   semester: 'Semester 1' | 'Semester 2';
   orderIndex: number;
+  parentId?: string | null;
+  subtopics?: SyllabusTopic[]; // UI Helper
   createdAt?: string;
 }
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { ListChecks, Plus, X, Check, AlertTriangle, BookOpen, ChevronDown, Library, BarChart3, Edit3, Trash2 } from 'lucide-react';
+import { ListChecks, Plus, X, Check, AlertTriangle, BookOpen, ChevronDown, Library, BarChart3, Edit3, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import { SyllabusTopic, Curriculum, SyllabusProgress, SyllabusStatus } from '../types';
 
 type ViewMode = 'tracker' | 'library';
@@ -33,6 +33,10 @@ const SyllabusHub: React.FC = () => {
     const [selectedCurriculumId, setSelectedCurriculumId] = useState<string>('');
     const [showAddCurriculumModal, setShowAddCurriculumModal] = useState(false);
     const [showAddTopicModal, setShowAddTopicModal] = useState(false);
+    const [addingSubtopicTo, setAddingSubtopicTo] = useState<string | null>(null); // parentId
+    const [editingTopic, setEditingTopic] = useState<SyllabusTopic | null>(null);
+    const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
+
     const [newCurriculumName, setNewCurriculumName] = useState('');
     const [newCurriculumBoardCode, setNewCurriculumBoardCode] = useState('');
     const [newTopicTitle, setNewTopicTitle] = useState('');
@@ -60,10 +64,36 @@ const SyllabusHub: React.FC = () => {
         return syllabusTopics.filter(t => t.curriculumId === classCurriculum.id);
     }, [classCurriculum, syllabusTopics]);
 
+    const isParentMap = useMemo(() => {
+        const map: Record<string, boolean> = {};
+        trackerTopics.forEach(t => {
+            if (t.parentId) map[t.parentId] = true;
+        });
+        return map;
+    }, [trackerTopics]);
+
     const filteredTrackerTopics = useMemo(() => {
         if (selectedSemester === 'all') return trackerTopics;
         return trackerTopics.filter(t => t.semester === selectedSemester);
     }, [trackerTopics, selectedSemester]);
+
+    const trackerHierarchy = useMemo(() => {
+        const roots = filteredTrackerTopics.filter(t => !t.parentId);
+        const childrenMap: Record<string, SyllabusTopic[]> = {};
+        filteredTrackerTopics.forEach(t => {
+            if (t.parentId) {
+                if (!childrenMap[t.parentId]) childrenMap[t.parentId] = [];
+                childrenMap[t.parentId].push(t);
+            }
+        });
+        return { roots, childrenMap };
+    }, [filteredTrackerTopics]);
+
+    const trackerCount = useMemo(() => {
+        // Count trackable items: (Total filtered) - (Roots that act as Chapters/Parents)
+        const chaptersCount = trackerHierarchy.roots.filter(r => (trackerHierarchy.childrenMap[r.id]?.length || 0) > 0).length;
+        return filteredTrackerTopics.length - chaptersCount;
+    }, [filteredTrackerTopics, trackerHierarchy]);
 
     const getTopicStatus = (topicId: string): SyllabusStatus => {
         const progress = syllabusProgress.find(p => p.classId === selectedClassId && p.topicId === topicId);
@@ -73,13 +103,13 @@ const SyllabusHub: React.FC = () => {
     const hasLinkedLesson = (topicId: string) => lessons.some(l => l.syllabusTopicId === topicId);
 
     const getProgress = (semester: 'Semester 1' | 'Semester 2') => {
-        const semesterTopics = trackerTopics.filter(t => t.semester === semester);
+        const semesterTopics = trackerTopics.filter(t => t.semester === semester && !isParentMap[t.id]);
         if (semesterTopics.length === 0) return 0;
         const completed = semesterTopics.filter(t => getTopicStatus(t.id) === 'completed').length;
         return Math.round((completed / semesterTopics.length) * 100);
     };
 
-    const unlinkedTopics = trackerTopics.filter(t => !hasLinkedLesson(t.id) && getTopicStatus(t.id) === 'not_started');
+    const unlinkedTopics = trackerTopics.filter(t => !isParentMap[t.id] && !hasLinkedLesson(t.id) && getTopicStatus(t.id) === 'not_started');
 
     const updateStatus = async (topicId: string, status: SyllabusStatus) => {
         await upsertSyllabusProgress({
@@ -96,9 +126,34 @@ const SyllabusHub: React.FC = () => {
     };
 
     // ===== LIBRARY VIEW LOGIC =====
-    const libraryTopics = useMemo(() => {
+    // ===== LIBRARY VIEW LOGIC =====
+    const topicList = useMemo(() => {
         return syllabusTopics.filter(t => t.curriculumId === selectedCurriculumId).sort((a, b) => a.orderIndex - b.orderIndex);
     }, [selectedCurriculumId, syllabusTopics]);
+
+    const hierarchy = useMemo(() => {
+        const roots = topicList.filter(t => !t.parentId);
+        const childrenMap: Record<string, SyllabusTopic[]> = {};
+        topicList.forEach(t => {
+            if (t.parentId) {
+                if (!childrenMap[t.parentId]) childrenMap[t.parentId] = [];
+                childrenMap[t.parentId].push(t);
+            }
+        });
+        return { roots, childrenMap };
+    }, [topicList]);
+
+    const toggleChapter = (id: string) => {
+        const next = new Set(expandedChapters);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        setExpandedChapters(next);
+    };
+
+    const libraryCount = useMemo(() => {
+        const chaptersCount = hierarchy.roots.filter(r => (hierarchy.childrenMap[r.id]?.length || 0) > 0).length;
+        return topicList.length - chaptersCount;
+    }, [topicList, hierarchy]);
 
     const handleAddCurriculum = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -122,21 +177,83 @@ const SyllabusHub: React.FC = () => {
     const handleAddTopic = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newTopicTitle || !selectedCurriculumId) return;
-        await addSyllabusTopic({
-            curriculumId: selectedCurriculumId,
-            title: newTopicTitle,
-            semester: newTopicSemester,
-            orderIndex: libraryTopics.length,
-            userId: ''
-        });
+
+        if (editingTopic) {
+            await updateSyllabusTopic({
+                ...editingTopic,
+                title: newTopicTitle,
+                semester: newTopicSemester
+            });
+        } else {
+            // Calculate order index
+            const siblings = addingSubtopicTo
+                ? hierarchy.childrenMap[addingSubtopicTo] || []
+                : hierarchy.roots;
+
+            await addSyllabusTopic({
+                curriculumId: selectedCurriculumId,
+                title: newTopicTitle,
+                semester: newTopicSemester,
+                orderIndex: siblings.length,
+                parentId: addingSubtopicTo || null,
+                userId: ''
+            });
+        }
         setNewTopicTitle('');
+        setEditingTopic(null);
         setShowAddTopicModal(false);
+        if (addingSubtopicTo) {
+            setExpandedChapters(new Set(expandedChapters).add(addingSubtopicTo));
+        }
+    };
+
+    const openAddTopicModal = (parentId: string | null = null) => {
+        setEditingTopic(null);
+        setAddingSubtopicTo(parentId);
+        setNewTopicTitle('');
+        // Default semester to parent's if adding subtopic
+        if (parentId) {
+            const parent = syllabusTopics.find(t => t.id === parentId);
+            if (parent) setNewTopicSemester(parent.semester);
+        }
+        setShowAddTopicModal(true);
+    };
+
+    const openEditTopicModal = (topic: SyllabusTopic) => {
+        setEditingTopic(topic);
+        setNewTopicTitle(topic.title);
+        setNewTopicSemester(topic.semester);
+        setShowAddTopicModal(true);
     };
 
     const handleDeleteTopic = async (id: string) => {
         if (window.confirm('Delete this topic?')) {
             await deleteSyllabusTopic(id);
         }
+    };
+
+    const handleMoveTopic = async (id: string, direction: 'up' | 'down') => {
+        const topic = syllabusTopics.find(t => t.id === id);
+        if (!topic) return;
+
+        const siblings = topic.parentId
+            ? (hierarchy.childrenMap[topic.parentId] || [])
+            : hierarchy.roots;
+
+        // Ensure sorted
+        const sortedSiblings = [...siblings].sort((a, b) => a.orderIndex - b.orderIndex);
+        const index = sortedSiblings.findIndex(t => t.id === id);
+        if (index === -1) return;
+
+        const swapIndex = direction === 'up' ? index - 1 : index + 1;
+        if (swapIndex < 0 || swapIndex >= sortedSiblings.length) return;
+
+        const sibling = sortedSiblings[swapIndex];
+
+        await Promise.all([
+            updateSyllabusTopic({ ...topic, orderIndex: sibling.orderIndex }),
+            updateSyllabusTopic({ ...sibling, orderIndex: topic.orderIndex })
+        ]);
     };
 
     const statusColors: Record<SyllabusStatus, string> = {
@@ -298,52 +415,107 @@ const SyllabusHub: React.FC = () => {
                     {/* Mastery Tracker List */}
                     <div className="flex-1 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-6 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden flex flex-col">
                         <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">
-                            Topics ({filteredTrackerTopics.length})
+                            Topics ({trackerCount})
                         </h3>
-                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-2">
-                            {filteredTrackerTopics.length > 0 ? filteredTrackerTopics.map(topic => {
-                                const status = getTopicStatus(topic.id);
-                                return (
-                                    <div
-                                        key={topic.id}
-                                        className="flex items-center justify-between p-4 rounded-2xl border bg-slate-50 dark:bg-slate-900/40 border-slate-100 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-all group"
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className={`w-4 h-4 rounded-full ${statusColors[status]}`} />
-                                            <div>
-                                                <p className="font-bold text-sm text-slate-800 dark:text-white">{topic.title}</p>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <span className="text-xs text-slate-400 font-medium">{topic.semester}</span>
-                                                    {hasLinkedLesson(topic.id) && (
-                                                        <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-md font-bold flex items-center gap-1">
-                                                            <BookOpen size={10} /> Lesson Planned
-                                                        </span>
-                                                    )}
+                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-2">
+                            {/* Group by Root/Chapter logic for Tracker */}
+                            {(() => {
+                                if (trackerHierarchy.roots.length === 0 && filteredTrackerTopics.length === 0) {
+                                    return (
+                                        <div className="h-32 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 italic border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl">
+                                            <ListChecks size={32} className="opacity-50 mb-2" />
+                                            <p>{classCurriculum ? 'No topics in this curriculum yet.' : 'Select a class with a linked curriculum.'}</p>
+                                        </div>
+                                    );
+                                }
+
+                                return trackerHierarchy.roots.map(root => {
+                                    const subtopics = trackerHierarchy.childrenMap[root.id] || [];
+                                    const rootStatus = getTopicStatus(root.id);
+
+                                    // If root has no subtopics, it is the trackable item
+                                    // If root has subtopics, it is a Chapter Header
+                                    const isChapter = subtopics.length > 0;
+
+                                    return (
+                                        <div key={root.id} className="space-y-2">
+                                            {/* Root Item / Chapter Header */}
+                                            <div className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${isChapter
+                                                ? 'bg-slate-100 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700'
+                                                : 'bg-slate-50 dark:bg-slate-900/40 border-slate-100 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                                                }`}>
+                                                <div className="flex items-center gap-4">
+                                                    {!isChapter && <div className={`w-4 h-4 rounded-full ${statusColors[rootStatus]}`} />}
+                                                    <div>
+                                                        <p className={`font-bold ${isChapter ? 'text-base text-slate-900 dark:text-white' : 'text-sm text-slate-800 dark:text-slate-200'}`}>
+                                                            {root.title}
+                                                        </p>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <span className="text-xs text-slate-400 font-medium">{root.semester}</span>
+                                                            {hasLinkedLesson(root.id) && (
+                                                                <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-md font-bold flex items-center gap-1">
+                                                                    <BookOpen size={10} /> Lesson Planned
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
                                                 </div>
+                                                {!isChapter && (
+                                                    <div className="flex gap-1">
+                                                        {(['not_started', 'taught', 'assessed', 'completed'] as SyllabusStatus[]).map(s => (
+                                                            <button
+                                                                key={s}
+                                                                onClick={() => updateStatus(root.id, s)}
+                                                                className={`px-2 py-1 text-xs font-bold rounded-lg transition-all ${rootStatus === s
+                                                                    ? `${statusColors[s]} text-white`
+                                                                    : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-600'
+                                                                    }`}
+                                                            >
+                                                                {s.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
+
+                                            {/* Subtopics List */}
+                                            {isChapter && (
+                                                <div className="pl-6 space-y-2 border-l-2 border-slate-200 dark:border-slate-700 ml-4">
+                                                    {subtopics.map(child => {
+                                                        const childStatus = getTopicStatus(child.id);
+                                                        return (
+                                                            <div key={child.id} className="flex items-center justify-between p-3 rounded-xl border bg-white dark:bg-slate-900/20 border-slate-100 dark:border-slate-700 hover:border-violet-200 dark:hover:border-violet-900/50 transition-all group">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className={`w-3 h-3 rounded-full ${statusColors[childStatus]}`} />
+                                                                    <p className="font-medium text-sm text-slate-700 dark:text-slate-300">{child.title}</p>
+                                                                    {hasLinkedLesson(child.id) && (
+                                                                        <BookOpen size={12} className="text-blue-500" />
+                                                                    )}
+                                                                </div>
+                                                                <div className="flex gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                                    {(['not_started', 'taught', 'assessed', 'completed'] as SyllabusStatus[]).map(s => (
+                                                                        <button
+                                                                            key={s}
+                                                                            onClick={() => updateStatus(child.id, s)}
+                                                                            className={`w-6 h-6 flex items-center justify-center rounded-md transition-all ${childStatus === s
+                                                                                ? `${statusColors[s]} text-white shadow-sm`
+                                                                                : 'bg-slate-100 dark:bg-slate-700 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'
+                                                                                }`}
+                                                                            title={s.replace('_', ' ')}
+                                                                        >
+                                                                            {childStatus === s && <Check size={12} />}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
                                         </div>
-                                        <div className="flex gap-1">
-                                            {(['not_started', 'taught', 'assessed', 'completed'] as SyllabusStatus[]).map(s => (
-                                                <button
-                                                    key={s}
-                                                    onClick={() => updateStatus(topic.id, s)}
-                                                    className={`px-2 py-1 text-xs font-bold rounded-lg transition-all ${status === s
-                                                        ? `${statusColors[s]} text-white`
-                                                        : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'
-                                                        }`}
-                                                >
-                                                    {s.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                );
-                            }) : (
-                                <div className="h-32 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 italic border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl">
-                                    <ListChecks size={32} className="opacity-50 mb-2" />
-                                    <p>{classCurriculum ? 'No topics in this curriculum yet.' : 'Select a class with a linked curriculum.'}</p>
-                                </div>
-                            )}
+                                    );
+                                });
+                            })()}
                         </div>
                     </div>
                 </>
@@ -396,34 +568,119 @@ const SyllabusHub: React.FC = () => {
                         <div className="flex-1 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-6 shadow-sm">
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-                                    Topics {selectedCurriculumId && `(${libraryTopics.length})`}
+                                    Topics {selectedCurriculumId && `(${libraryCount})`}
                                 </h3>
                                 {selectedCurriculumId && (
                                     <button
-                                        onClick={() => setShowAddTopicModal(true)}
+                                        onClick={() => openAddTopicModal(null)}
                                         className="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all"
                                     >
-                                        <Plus size={16} /> Add Topic
+                                        <Plus size={16} /> Add Chapter
                                     </button>
                                 )}
                             </div>
-                            <div className="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
-                                {libraryTopics.map(t => (
-                                    <div key={t.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-700 group">
-                                        <div>
-                                            <p className="font-bold text-sm text-slate-800 dark:text-white">{t.title}</p>
-                                            <p className="text-xs text-slate-400">{t.semester}</p>
+                            <div className="space-y-3 max-h-[600px] overflow-y-auto custom-scrollbar pr-2">
+                                {hierarchy.roots.map(root => {
+                                    const subtopics = hierarchy.childrenMap[root.id] || [];
+                                    const isExpanded = expandedChapters.has(root.id);
+
+                                    return (
+                                        <div key={root.id} className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-900/30">
+                                            {/* Chapter Header */}
+                                            <div
+                                                className="flex items-center justify-between p-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                                onClick={() => toggleChapter(root.id)}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`p-1 rounded-md transition-transform duration-200 ${isExpanded ? 'rotate-90 text-violet-600' : 'text-slate-400'}`}>
+                                                        <ChevronDown size={18} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-slate-800 dark:text-white">{root.title}</p>
+                                                        <p className="text-xs text-slate-400">{root.semester} • {subtopics.length} subtopics</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="flex flex-col gap-0.5 mr-2">
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleMoveTopic(root.id, 'up'); }}
+                                                            className="p-0.5 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded disabled:opacity-30"
+                                                            disabled={hierarchy.roots.indexOf(root) === 0}
+                                                        >
+                                                            <ArrowUp size={12} />
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleMoveTopic(root.id, 'down'); }}
+                                                            className="p-0.5 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded disabled:opacity-30"
+                                                            disabled={hierarchy.roots.indexOf(root) === hierarchy.roots.length - 1}
+                                                        >
+                                                            <ArrowDown size={12} />
+                                                        </button>
+                                                    </div>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); openEditTopicModal(root); }}
+                                                        className="p-1.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg transition-colors"
+                                                        title="Edit Chapter"
+                                                    >
+                                                        <Edit3 size={16} />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); openAddTopicModal(root.id); }}
+                                                        className="p-1.5 text-violet-600 hover:bg-violet-100 dark:hover:bg-violet-900/30 rounded-lg text-xs font-bold"
+                                                        title="Add Subtopic"
+                                                    >
+                                                        <Plus size={16} />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleDeleteTopic(root.id); }}
+                                                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* Subtopics List */}
+                                            {isExpanded && (
+                                                <div className="border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/20">
+                                                    {subtopics.length > 0 ? (
+                                                        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                                                            {subtopics.map(sub => (
+                                                                <div key={sub.id} className="p-3 flex items-center justify-between pl-12 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600" />
+                                                                        <span className="text-sm text-slate-600 dark:text-slate-300 font-medium">{sub.title}</span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                        <button
+                                                                            onClick={() => openEditTopicModal(sub)}
+                                                                            className="p-1 text-slate-300 hover:text-violet-500 transition-colors"
+                                                                        >
+                                                                            <Edit3 size={14} />
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handleDeleteTopic(sub.id)}
+                                                                            className="p-1 text-slate-300 hover:text-red-500 transition-colors"
+                                                                        >
+                                                                            <Trash2 size={14} />
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="p-4 text-center text-xs text-slate-400 italic">
+                                                            No subtopics. Click + to add one.
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
-                                        <button
-                                            onClick={() => handleDeleteTopic(t.id)}
-                                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
-                                ))}
-                                {libraryTopics.length === 0 && selectedCurriculumId && (
-                                    <p className="text-slate-400 dark:text-slate-500 text-sm italic text-center py-8">No topics yet. Add one!</p>
+                                    );
+                                })}
+
+                                {hierarchy.roots.length === 0 && selectedCurriculumId && (
+                                    <p className="text-slate-400 dark:text-slate-500 text-sm italic text-center py-8">No chapters yet. Add one!</p>
                                 )}
                                 {!selectedCurriculumId && (
                                     <p className="text-slate-400 dark:text-slate-500 text-sm italic text-center py-8">Select a template to view topics.</p>
@@ -477,7 +734,9 @@ const SyllabusHub: React.FC = () => {
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
                     <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl w-full max-w-md shadow-2xl p-8 animate-slide-up">
                         <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-bold text-slate-900 dark:text-white">Add Topic</h3>
+                            <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                                {editingTopic ? 'Edit Topic' : (addingSubtopicTo ? 'Add Subtopic' : 'Add Chapter')}
+                            </h3>
                             <button onClick={() => setShowAddTopicModal(false)} className="p-2 bg-slate-100 dark:bg-slate-700/50 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
                                 <X size={20} />
                             </button>
@@ -508,7 +767,7 @@ const SyllabusHub: React.FC = () => {
                                 </div>
                             </div>
                             <button type="submit" className="w-full bg-violet-600 hover:bg-violet-700 text-white py-3 rounded-xl font-bold shadow-lg shadow-violet-600/20 transition-all">
-                                Add Topic
+                                {editingTopic ? 'Update Topic' : (addingSubtopicTo ? 'Add Subtopic' : 'Add Chapter')}
                             </button>
                         </form>
                     </div>

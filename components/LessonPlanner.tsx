@@ -339,9 +339,37 @@ const LessonPlanner: React.FC = () => {
                                             {(() => {
                                                 const selectedClass = classes.find(c => c.id === classId);
                                                 const curriculumId = selectedClass?.curriculumId;
-                                                return syllabusTopics.filter(t => t.curriculumId === curriculumId).map(t => (
-                                                    <option key={t.id} value={t.id}>{t.title} ({t.semester})</option>
-                                                ));
+                                                if (!curriculumId) return null;
+
+                                                const topics = syllabusTopics
+                                                    .filter(t => t.curriculumId === curriculumId)
+                                                    .sort((a, b) => a.orderIndex - b.orderIndex);
+
+                                                const childrenMap: Record<string, typeof topics> = {};
+                                                topics.forEach(t => {
+                                                    if (t.parentId) {
+                                                        if (!childrenMap[t.parentId]) childrenMap[t.parentId] = [];
+                                                        childrenMap[t.parentId].push(t);
+                                                    }
+                                                });
+
+                                                const roots = topics.filter(t => !t.parentId);
+
+                                                return roots.map(root => {
+                                                    const children = childrenMap[root.id];
+                                                    if (children && children.length > 0) {
+                                                        return (
+                                                            <optgroup key={root.id} label={`${root.title} (${root.semester})`}>
+                                                                {children.sort((a, b) => a.orderIndex - b.orderIndex).map(child => (
+                                                                    <option key={child.id} value={child.id}>{child.title}</option>
+                                                                ))}
+                                                            </optgroup>
+                                                        );
+                                                    }
+                                                    return (
+                                                        <option key={root.id} value={root.id}>{root.title} ({root.semester})</option>
+                                                    );
+                                                });
                                             })()}
                                         </select>
                                         <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
