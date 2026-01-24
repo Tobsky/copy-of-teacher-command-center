@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { ListChecks, Plus, X, Check, AlertTriangle, BookOpen, ChevronDown, Library, BarChart3, Edit3, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import { SyllabusTopic, Curriculum, SyllabusProgress, SyllabusStatus } from '../types';
@@ -256,6 +257,15 @@ const SyllabusHub: React.FC = () => {
         ]);
     };
 
+    const navigate = useNavigate();
+    const handleViewLesson = (topicId: string) => {
+        // Find ANY lesson linked to this topic (first one found)
+        const lesson = lessons.find(l => l.syllabusTopicId === topicId);
+        if (lesson) {
+            navigate('/planner', { state: { lessonId: lesson.id } });
+        }
+    };
+
     const statusColors: Record<SyllabusStatus, string> = {
         not_started: 'bg-slate-200 dark:bg-slate-700',
         taught: 'bg-blue-500',
@@ -489,7 +499,13 @@ const SyllabusHub: React.FC = () => {
                                                                     <div className={`w-3 h-3 rounded-full ${statusColors[childStatus]}`} />
                                                                     <p className="font-medium text-sm text-slate-700 dark:text-slate-300">{child.title}</p>
                                                                     {hasLinkedLesson(child.id) && (
-                                                                        <BookOpen size={12} className="text-blue-500" />
+                                                                        <button
+                                                                            onClick={() => handleViewLesson(child.id)}
+                                                                            className="p-1 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
+                                                                            title="View Lesson Plan"
+                                                                        >
+                                                                            <BookOpen size={14} className="text-blue-500 hover:text-blue-600" />
+                                                                        </button>
                                                                     )}
                                                                 </div>
                                                                 <div className="flex gap-1 opacity-60 group-hover:opacity-100 transition-opacity">

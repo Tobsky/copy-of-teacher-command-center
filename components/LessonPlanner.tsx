@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { Calendar, Plus, Link as LinkIcon, Trash2, ExternalLink, ChevronRight, X, BookOpen, FileText, Video, Image as ImageIcon, AlertCircle, Sparkles, Loader2 } from 'lucide-react';
 import { Lesson, LessonResource, ResourceType } from '../types';
@@ -6,6 +7,7 @@ import { generateLessonPlan } from '../services/geminiService';
 
 const LessonPlanner: React.FC = () => {
     const { lessons, classes, syllabusTopics, curriculums, addLesson, updateLesson, deleteLesson, fetchLessons, fetchSyllabusTopics, fetchClasses, fetchCurriculums } = useAppContext();
+    const location = useLocation();
 
     useEffect(() => {
         fetchLessons();
@@ -17,6 +19,26 @@ const LessonPlanner: React.FC = () => {
     const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [showForm, setShowForm] = useState(false);
     const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
+
+    // Handle deep link from other pages
+    useEffect(() => {
+        if (location.state?.lessonId && lessons.length > 0) {
+            const lesson = lessons.find(l => l.id === location.state.lessonId);
+            if (lesson) {
+                setEditingLesson(lesson);
+                setTitle(lesson.title);
+                setContent(lesson.content);
+                setClassId(lesson.classId || '');
+                setResources(lesson.resources || []);
+                setSyllabusTopicId(lesson.syllabusTopicId || '');
+                setSelectedDate(lesson.date);
+                setShowForm(true);
+                // Clean up state to prevent reopening on generic re-renders? 
+                // React Router history state persists. 
+                // Ideally, we replace history to clear it, but user might want to refresh and stay.
+            }
+        }
+    }, [location.state, lessons]);
 
     // Form State
     const [title, setTitle] = useState('');
