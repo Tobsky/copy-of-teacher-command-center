@@ -142,7 +142,12 @@ export const generateLessonPlan = async (
     
     Output Format: JSON with "title" and "content" fields.
     - "title": A concise, engaging title for the lesson.
-    - "content": A structured lesson plan including Learning Objectives, Key Concepts, Activities (with timing), and Homework/Assessment. Use markdown for formatting the content (bullet points, bold text).
+    - "content": A structured lesson plan including Learning Objectives, Key Concepts, Activities (with timing), and Homework/Assessment. 
+    - Formatting Rules:
+      1. Do NOT use Markdown syntax (no #, **, ##, etc).
+      2. Use Unicode Bold text for headers and emphasis (e.g. 𝐈𝐧𝐭𝐫𝐨𝐝𝐮𝐜𝐭𝐢𝐨𝐧).
+      3. Use Emojis for icons and bullet points (e.g. 🎯 Objectives, ⏱️ 10 min).
+      4. Use plain text formatting (newlines and spacing) for structure.
     
     Keep the content concise but useful (approx 200-300 words).
   `;
