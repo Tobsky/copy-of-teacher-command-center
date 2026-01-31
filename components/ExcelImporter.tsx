@@ -230,13 +230,89 @@ const ExcelImporter: React.FC<ExcelImporterProps> = ({ onImportComplete, classes
         }
     };
 
+    const downloadTemplate = () => {
+        // Define the 3-row header structure
+        // Row 1: Categories and Student Metadata Headers
+        const row1 = [
+            "Student No.",
+            "English Name",
+            "Homework(20%)", "", "", // Merged cell simulation for category
+            "Test(30%)", "", ""      // Another category
+        ];
+
+        // Row 2: Assignment Titles
+        const row2 = [
+            "", "", // Spacer for student info
+            "Week 1 Homework", "", "",
+            "Unit 1 Test", "", ""
+        ];
+
+        // Row 3: Score Types
+        const row3 = [
+            "", "", // Spacer
+            "Score", "TotalScore", "", // 3 columns per assignment to be safe, though usually 2. Let's stick to the pattern.
+            // Actually, the parser logic looks for "Score" and then looks ahead for "TotalScore". 
+            // Often it's: [Score-Col] [TotalScore-Col]
+            // Let's make it clear:
+            "Score", "TotalScore", "", // Extra column for spacing or remarks if needed, matching the 3-column span of row 1 roughly? 
+            // Wait, let's align strictly with the parser.
+            // Parser iterates colIdx. 
+            // If it finds "Score", it looks for "TotalScore".
+            // So:
+            // Col 2: Score, Col 3: TotalScore.
+        ];
+
+        // Let's refine the structure to be cleaner and more robust for the user
+        const headers = [
+            // Row 1
+            ["Student No.", "English Name", "Homework(30%)", "", "Test(50%)", ""],
+            // Row 2
+            ["", "", "Math HW 1", "", "Mid-term Exam", ""],
+            // Row 3 (The parser looks for 'Score' and 'TotalScore')
+            ["", "", "Score", "TotalScore", "Score", "TotalScore"]
+        ];
+
+        // Sample Data
+        const data = [
+            ["1001", "John Doe", 85, 100, 92, 100],
+            ["1002", "Jane Smith", 90, 100, 88, 100],
+        ];
+
+        // Combine
+        const wsData = [...headers, ...data];
+
+        // Create Sheet
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+        // Optional: Merges for better visuals (though parser handles it logic-wise, visual merges help user)
+        // Merge "Homework(30%)" over 2 columns
+        // Merge "Test(50%)" over 2 columns
+        ws['!merges'] = [
+            { s: { r: 0, c: 2 }, e: { r: 0, c: 3 } }, // Homework
+            { s: { r: 0, c: 4 }, e: { r: 0, c: 5 } }  // Test
+        ];
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Template");
+        XLSX.writeFile(wb, "Gradebook_Template.xlsx");
+    };
+
     return (
         <div className="animate-fade-in w-full">
-            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
-                <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg text-emerald-600 dark:text-emerald-400">
-                    <FileSpreadsheet size={20} />
+            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-6 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                    <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg text-emerald-600 dark:text-emerald-400">
+                        <FileSpreadsheet size={20} />
+                    </div>
+                    Import from Excel
                 </div>
-                Import from Excel
+                <button
+                    onClick={downloadTemplate}
+                    className="text-sm flex items-center gap-2 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium px-3 py-1.5 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
+                >
+                    <Upload size={16} className="rotate-180" /> {/* Reusing Upload icon rotated as Download */}
+                    Download Template
+                </button>
             </h3>
 
             <div className="space-y-6">
