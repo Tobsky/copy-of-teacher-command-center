@@ -13,7 +13,8 @@ import {
     X,
     Moon,
     Sun,
-    GraduationCap
+    GraduationCap,
+    ListChecks
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
@@ -141,8 +142,8 @@ const LandingPage: React.FC = () => {
                     </div>
 
                     <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6 tracking-tight animate-slide-up">
-                        Stop Fighting Spreadsheets.<br />
-                        <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">Start Teaching.</span>
+                        Your AI-Powered<br />
+                        <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">Teacher Command Center.</span>
                     </h1>
 
                     <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed animate-slide-up delay-100">
@@ -183,12 +184,12 @@ const LandingPage: React.FC = () => {
                         <FeatureCard
                             icon={<Sparkles className="text-violet-500" size={32} />}
                             title="Smart AI Feedback"
-                            description="Generate professional, data-driven report comments that sound like you. Grounded in actual student performance."
+                            description="Generate personalized report comments that analyze grades, attendance, and behavioral traits in seconds."
                         />
                         <FeatureCard
-                            icon={<ShieldAlert className="text-amber-500" size={32} />}
-                            title="Intervention Manager"
-                            description="Identify at-risk students automatically. Generate parent outreach and log evidence of intervention for compliance."
+                            icon={<ListChecks className="text-amber-500" size={32} />}
+                            title="Syllabus & Mastery"
+                            description="Track coverage against exam boards. spot gaps instantly with mastery heatmaps and never miss a topic."
                         />
                     </div>
                 </div>
@@ -263,6 +264,37 @@ const LandingPage: React.FC = () => {
                                         <div className="h-16 w-16 bg-slate-100 dark:bg-slate-800 rounded-lg" />
                                         <div className="h-16 w-16 bg-slate-100 dark:bg-slate-800 rounded-lg" />
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Item 3 */}
+                    <div className="flex flex-col md:flex-row items-center gap-12 md:gap-24">
+                        <div className="flex-1 space-y-6">
+                            <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                                <ListChecks size={24} />
+                            </div>
+                            <h3 className="text-3xl font-bold">Total Syllabus Control</h3>
+                            <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed">
+                                Ditch the paper checklist. Track every topic from "Not Started" to "Mastered". Link lessons directly to syllabus points and visualize your progress.
+                            </p>
+                            <ul className="space-y-3">
+                                <ListItem text="Exam Board Templates" />
+                                <ListItem text="Gap Analysis Alerts" />
+                                <ListItem text="Mastery Heatmaps" />
+                            </ul>
+                        </div>
+                        <div className="flex-1 bg-gradient-to-br from-emerald-100 to-teal-50 dark:from-slate-800 dark:to-slate-900 rounded-3xl p-8 aspect-[4/3] flex items-center justify-center shadow-2xl">
+                            <div className="w-full h-full bg-white dark:bg-slate-950 rounded-xl shadow-lg p-6 border border-slate-200 dark:border-slate-800 opacity-90 hover:scale-105 transition-transform duration-500 flex flex-col gap-3">
+                                <div className="h-4 w-1/3 bg-slate-100 dark:bg-slate-800 rounded-full mb-2" />
+                                <div className="space-y-2">
+                                    {[1, 2, 3, 4].map(i => (
+                                        <div key={i} className="flex items-center gap-3 p-2 border border-slate-50 dark:border-slate-800 rounded-lg">
+                                            <div className={`w-3 h-3 rounded-full ${i === 1 ? 'bg-emerald-500' : i === 2 ? 'bg-blue-500' : 'bg-slate-200 dark:bg-slate-700'}`} />
+                                            <div className="h-2 w-2/3 bg-slate-100 dark:bg-slate-800 rounded-full" />
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         </div>
