@@ -41,7 +41,7 @@ const SmartFeedback: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col space-y-8 animate-fade-in relative pb-6">
+    <div className="h-auto lg:h-full flex flex-col space-y-8 animate-fade-in relative pb-6">
       <header className="flex flex-col gap-2">
         <h2 className="text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
           <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-purple-600 dark:text-purple-400">
@@ -52,7 +52,7 @@ const SmartFeedback: React.FC = () => {
         <p className="text-slate-500 dark:text-slate-400">Generate AI-powered progress report comments based on student data, effortlessly.</p>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full min-h-0">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-auto lg:h-full lg:min-h-0">
         {/* Selection Panel */}
         <div className="lg:col-span-4 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-8 shadow-xl shadow-slate-200/50 dark:shadow-none h-fit">
           <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
@@ -124,7 +124,7 @@ const SmartFeedback: React.FC = () => {
         </div>
 
         {/* Output Panel */}
-        <div className="lg:col-span-8 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-8 shadow-xl shadow-slate-200/50 dark:shadow-none flex flex-col h-full min-h-0">
+        <div className="lg:col-span-8 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-8 shadow-xl shadow-slate-200/50 dark:shadow-none flex flex-col h-auto lg:h-full lg:min-h-0 min-h-[500px]">
           <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-sm font-bold text-slate-600 dark:text-slate-300">2</div>
             Generated Report
@@ -132,7 +132,7 @@ const SmartFeedback: React.FC = () => {
 
           <div className="flex-1 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 relative overflow-hidden group">
             {feedback ? (
-              <div className="h-full overflow-y-auto custom-scrollbar pr-2">
+              <div className="h-auto lg:h-full lg:overflow-y-auto custom-scrollbar pr-2">
                 <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-serif text-lg tracking-wide whitespace-pre-line">{feedback}</p>
                 <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button

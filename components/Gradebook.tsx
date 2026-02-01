@@ -277,7 +277,7 @@ const Gradebook: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-900/50 text-xs text-slate-500 dark:text-slate-400 font-bold uppercase border-b border-slate-200 dark:border-slate-700">
-                <th className="sticky left-0 bg-slate-50 dark:bg-slate-900 z-20 px-6 py-5 border-r border-slate-200 dark:border-slate-700 min-w-[220px] shadow-[4px_0_12px_rgba(0,0,0,0.05)] dark:shadow-[4px_0_24px_rgba(0,0,0,0.3)]">Student Name</th>
+                <th className="sticky left-0 bg-slate-50 dark:bg-slate-900 z-20 px-3 md:px-6 py-5 border-r border-slate-200 dark:border-slate-700 min-w-[140px] md:min-w-[220px] shadow-[4px_0_12px_rgba(0,0,0,0.05)] dark:shadow-[4px_0_24px_rgba(0,0,0,0.3)]">Student Name</th>
                 <th className="px-6 py-5 min-w-[100px] text-center bg-slate-100/50 dark:bg-slate-900/80 border-r border-slate-200 dark:border-slate-700 text-blue-600 dark:text-blue-400 font-extrabold tracking-wider">Average</th>
                 {activeAssignments.map(a => (
                   <th
@@ -315,7 +315,7 @@ const Gradebook: React.FC = () => {
 
                 return (
                   <tr key={student.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 group transition-colors">
-                    <td className="sticky left-0 bg-white dark:bg-slate-800 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/80 px-6 py-3 border-r border-slate-200 dark:border-slate-700 font-bold text-slate-700 dark:text-slate-200 shadow-[4px_0_12px_rgba(0,0,0,0.05)] dark:shadow-[4px_0_24px_rgba(0,0,0,0.3)] z-10">
+                    <td className="sticky left-0 bg-white dark:bg-slate-800 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/80 px-3 md:px-6 py-3 border-r border-slate-200 dark:border-slate-700 font-bold text-slate-700 dark:text-slate-200 shadow-[4px_0_12px_rgba(0,0,0,0.05)] dark:shadow-[4px_0_24px_rgba(0,0,0,0.3)] z-10">
                       <button
                         onClick={() => setSelectedStudent(student)}
                         className="hover:text-blue-500 hover:underline flex items-center gap-3 text-left w-full truncate transition-colors"

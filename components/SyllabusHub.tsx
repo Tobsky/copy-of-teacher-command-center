@@ -277,7 +277,7 @@ const SyllabusHub: React.FC = () => {
     const sem2Progress = getProgress('Semester 2');
 
     return (
-        <div className="h-full flex flex-col space-y-6 animate-fade-in relative pb-6">
+        <div className="h-auto lg:h-full flex flex-col space-y-6 animate-fade-in relative pb-6">
             {/* Header */}
             <header className="flex justify-between items-end flex-wrap gap-6">
                 <div>
@@ -423,11 +423,11 @@ const SyllabusHub: React.FC = () => {
                     )}
 
                     {/* Mastery Tracker List */}
-                    <div className="flex-1 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-6 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden flex flex-col">
+                    <div className="min-h-[500px] lg:min-h-0 flex-1 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-6 shadow-xl shadow-slate-200/50 dark:shadow-none lg:overflow-hidden flex flex-col">
                         <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">
                             Topics ({trackerCount})
                         </h3>
-                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-2">
+                        <div className="flex-1 lg:overflow-y-auto custom-scrollbar space-y-4 pr-2">
                             {/* Group by Root/Chapter logic for Tracker */}
                             {(() => {
                                 if (trackerHierarchy.roots.length === 0 && filteredTrackerTopics.length === 0) {
@@ -455,7 +455,7 @@ const SyllabusHub: React.FC = () => {
                                                 : 'bg-slate-50 dark:bg-slate-900/40 border-slate-100 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
                                                 }`}>
                                                 <div className="flex items-center gap-4">
-                                                    {!isChapter && <div className={`w-4 h-4 rounded-full ${statusColors[rootStatus]}`} />}
+                                                    {!isChapter && null}
                                                     <div>
                                                         <p className={`font-bold ${isChapter ? 'text-base text-slate-900 dark:text-white' : 'text-sm text-slate-800 dark:text-slate-200'}`}>
                                                             {root.title}
@@ -471,19 +471,23 @@ const SyllabusHub: React.FC = () => {
                                                     </div>
                                                 </div>
                                                 {!isChapter && (
-                                                    <div className="flex gap-1">
-                                                        {(['not_started', 'taught', 'assessed', 'completed'] as SyllabusStatus[]).map(s => (
-                                                            <button
-                                                                key={s}
-                                                                onClick={() => updateStatus(root.id, s)}
-                                                                className={`px-2 py-1 text-xs font-bold rounded-lg transition-all ${rootStatus === s
-                                                                    ? `${statusColors[s]} text-white`
-                                                                    : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-600'
-                                                                    }`}
-                                                            >
-                                                                {s.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}
-                                                            </button>
-                                                        ))}
+                                                    <div className="relative min-w-[140px]">
+                                                        <select
+                                                            value={rootStatus}
+                                                            onChange={(e) => updateStatus(root.id, e.target.value as SyllabusStatus)}
+                                                            className={`w-full appearance-none pl-3 pr-8 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer outline-none focus:ring-2 focus:ring-opacity-50 ${rootStatus === 'not_started' ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 focus:ring-slate-400' :
+                                                                rootStatus === 'taught' ? 'bg-blue-500 text-white border-blue-600 focus:ring-blue-400' :
+                                                                    rootStatus === 'assessed' ? 'bg-amber-500 text-white border-amber-600 focus:ring-amber-400' :
+                                                                        'bg-emerald-500 text-white border-emerald-600 focus:ring-emerald-400'
+                                                                }`}
+                                                        >
+                                                            <option value="not_started" className="bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-200">Not Started</option>
+                                                            <option value="taught" className="bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-200">Taught</option>
+                                                            <option value="assessed" className="bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-200">Assessed</option>
+                                                            <option value="completed" className="bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-200">Completed</option>
+                                                        </select>
+                                                        <ChevronDown size={14} className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${rootStatus === 'not_started' ? 'text-slate-400' : 'text-white/80'
+                                                            }`} />
                                                     </div>
                                                 )}
                                             </div>
@@ -496,7 +500,7 @@ const SyllabusHub: React.FC = () => {
                                                         return (
                                                             <div key={child.id} className="flex items-center justify-between p-3 rounded-xl border bg-white dark:bg-slate-900/20 border-slate-100 dark:border-slate-700 hover:border-violet-200 dark:hover:border-violet-900/50 transition-all group">
                                                                 <div className="flex items-center gap-3">
-                                                                    <div className={`w-3 h-3 rounded-full ${statusColors[childStatus]}`} />
+                                                                    <div />
                                                                     <p className="font-medium text-sm text-slate-700 dark:text-slate-300">{child.title}</p>
                                                                     {hasLinkedLesson(child.id) && (
                                                                         <button
@@ -508,20 +512,23 @@ const SyllabusHub: React.FC = () => {
                                                                         </button>
                                                                     )}
                                                                 </div>
-                                                                <div className="flex gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                                                                    {(['not_started', 'taught', 'assessed', 'completed'] as SyllabusStatus[]).map(s => (
-                                                                        <button
-                                                                            key={s}
-                                                                            onClick={() => updateStatus(child.id, s)}
-                                                                            className={`w-6 h-6 flex items-center justify-center rounded-md transition-all ${childStatus === s
-                                                                                ? `${statusColors[s]} text-white shadow-sm`
-                                                                                : 'bg-slate-100 dark:bg-slate-700 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'
-                                                                                }`}
-                                                                            title={s.replace('_', ' ')}
-                                                                        >
-                                                                            {childStatus === s && <Check size={12} />}
-                                                                        </button>
-                                                                    ))}
+                                                                <div className="relative min-w-[130px]">
+                                                                    <select
+                                                                        value={childStatus}
+                                                                        onChange={(e) => updateStatus(child.id, e.target.value as SyllabusStatus)}
+                                                                        className={`w-full appearance-none pl-3 pr-8 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer outline-none focus:ring-2 focus:ring-opacity-50 ${childStatus === 'not_started' ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 focus:ring-slate-400' :
+                                                                            childStatus === 'taught' ? 'bg-blue-500 text-white border-blue-600 focus:ring-blue-400' :
+                                                                                childStatus === 'assessed' ? 'bg-amber-500 text-white border-amber-600 focus:ring-amber-400' :
+                                                                                    'bg-emerald-500 text-white border-emerald-600 focus:ring-emerald-400'
+                                                                            }`}
+                                                                    >
+                                                                        <option value="not_started" className="bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-200">Not Started</option>
+                                                                        <option value="taught" className="bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-200">Taught</option>
+                                                                        <option value="assessed" className="bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-200">Assessed</option>
+                                                                        <option value="completed" className="bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-200">Completed</option>
+                                                                    </select>
+                                                                    <ChevronDown size={14} className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${childStatus === 'not_started' ? 'text-slate-400' : 'text-white/80'
+                                                                        }`} />
                                                                 </div>
                                                             </div>
                                                         );
@@ -581,7 +588,7 @@ const SyllabusHub: React.FC = () => {
                         </div>
 
                         {/* Topic Editor */}
-                        <div className="flex-1 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-6 shadow-sm">
+                        <div className="w-full lg:flex-1 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-6 shadow-sm">
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-lg font-bold text-slate-800 dark:text-white">
                                     Topics {selectedCurriculumId && `(${libraryCount})`}
@@ -595,7 +602,7 @@ const SyllabusHub: React.FC = () => {
                                     </button>
                                 )}
                             </div>
-                            <div className="space-y-3 max-h-[600px] overflow-y-auto custom-scrollbar pr-2">
+                            <div className="space-y-3 lg:max-h-[600px] lg:overflow-y-auto custom-scrollbar pr-2">
                                 {hierarchy.roots.map(root => {
                                     const subtopics = hierarchy.childrenMap[root.id] || [];
                                     const isExpanded = expandedChapters.has(root.id);

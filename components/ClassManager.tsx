@@ -81,9 +81,9 @@ const ClassManager: React.FC = () => {
   const classStudents = students.filter(s => s.classId === selectedClassId);
 
   return (
-    <div className="flex flex-col md:flex-row gap-8 h-[calc(100vh-6rem)] animate-fade-in">
+    <div className="flex flex-col md:flex-row gap-8 h-auto md:h-[calc(100vh-6rem)] animate-fade-in">
       {/* Left Column: Class List */}
-      <div className="w-full md:w-80 lg:w-96 flex flex-col h-full shrink-0">
+      <div className="w-full md:w-80 lg:w-96 flex flex-col h-[500px] md:h-full shrink-0">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
             <GraduationCap className="text-blue-500" />

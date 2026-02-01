@@ -52,20 +52,20 @@ const Attendance: React.FC = () => {
         </div>
 
         <div className="flex gap-4 items-center flex-wrap">
-          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-1.5 flex items-center shadow-sm hover:shadow-md transition-shadow">
-            <Calendar size={18} className="text-slate-400 ml-2" />
+          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-1.5 flex items-center shadow-sm hover:shadow-md transition-shadow w-full sm:w-auto">
+            <Calendar size={18} className="text-slate-400 ml-2 shrink-0" />
             <input
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="bg-transparent text-slate-700 dark:text-white text-sm outline-none px-3 font-medium cursor-pointer"
+              className="bg-transparent text-slate-700 dark:text-white text-sm outline-none px-3 font-medium cursor-pointer w-full sm:w-auto"
             />
           </div>
-          <div className="relative group">
+          <div className="relative group w-full sm:w-auto">
             <select
               value={selectedClassId}
               onChange={(e) => setSelectedClassId(e.target.value)}
-              className="appearance-none bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-white text-sm font-medium rounded-xl px-5 py-2.5 pr-10 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm hover:border-blue-400 dark:hover:border-blue-500 cursor-pointer min-w-[200px]"
+              className="appearance-none bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-white text-sm font-medium rounded-xl px-5 py-2.5 pr-10 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm hover:border-blue-400 dark:hover:border-blue-500 cursor-pointer w-full sm:min-w-[200px]"
             >
               {classes.map(c => <option key={c.id} value={c.id}>{c.name} ({c.section})</option>)}
             </select>

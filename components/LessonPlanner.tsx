@@ -159,7 +159,7 @@ const LessonPlanner: React.FC = () => {
     };
 
     return (
-        <div className="h-full flex flex-col space-y-8 animate-fade-in relative pb-6">
+        <div className="h-auto lg:h-full flex flex-col space-y-8 animate-fade-in relative pb-6">
             <header className="flex justify-between items-end flex-wrap gap-6">
                 <div>
                     <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-3">
@@ -178,7 +178,7 @@ const LessonPlanner: React.FC = () => {
                 </button>
             </header>
 
-            <div className="flex flex-col lg:flex-row gap-8 h-full min-h-0">
+            <div className="flex flex-col lg:flex-row gap-8 h-auto lg:h-full lg:min-h-0">
                 {/* Left: Calendar & Upcoming */}
                 <div className="w-full lg:w-1/3 flex flex-col gap-8">
                     <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow">
@@ -227,7 +227,7 @@ const LessonPlanner: React.FC = () => {
                 </div>
 
                 {/* Right: Daily Schedule */}
-                <div className="w-full lg:w-2/3 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-8 shadow-xl shadow-slate-200/50 dark:shadow-none flex flex-col h-full min-h-0">
+                <div className="w-full lg:w-2/3 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-8 shadow-xl shadow-slate-200/50 dark:shadow-none flex flex-col h-auto lg:h-full lg:min-h-0 min-h-[500px]">
                     <div className="flex justify-between items-center mb-6 pb-6 border-b border-slate-100 dark:border-slate-700">
                         <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
                             Schedule for <span className="text-blue-600 dark:text-blue-400">{new Date(selectedDate).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</span>
