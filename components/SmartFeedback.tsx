@@ -22,8 +22,23 @@ const SmartFeedback: React.FC = () => {
 
   const [feedback, setFeedback] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [selectedBehaviors, setSelectedBehaviors] = useState<string[]>([]);
 
   const activeStudents = students.filter(s => s.classId === selectedClassId);
+
+  const predefinedBehaviors = [
+    "Participative", "Hardworking", "Distracted", "Helpful",
+    "Creative", "Punctual", "Disruptive", "Consistent",
+    "Improving", "Inattentive", "Leader", "Quiet"
+  ];
+
+  const toggleBehavior = (behavior: string) => {
+    setSelectedBehaviors(prev =>
+      prev.includes(behavior)
+        ? prev.filter(b => b !== behavior)
+        : [...prev, behavior]
+    );
+  };
 
   const handleGenerate = async () => {
     if (!selectedStudentId) return;
@@ -34,7 +49,7 @@ const SmartFeedback: React.FC = () => {
     if (student && clazz) {
       setLoading(true);
       setFeedback('');
-      const result = await generateStudentFeedback(student, clazz, assignments, grades, attendance, startDate, endDate);
+      const result = await generateStudentFeedback(student, clazz, assignments, grades, attendance, startDate, endDate, selectedBehaviors);
       setFeedback(result);
       setLoading(false);
     }
@@ -72,17 +87,39 @@ const SmartFeedback: React.FC = () => {
               </select>
             </div>
 
+
+
+            {/* Student Selection */}
             <div>
               <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Student</label>
               <select
                 value={selectedStudentId}
-                onChange={(e) => setSelectedStudentId(e.target.value)}
+                onChange={(e) => { setSelectedStudentId(e.target.value); setSelectedBehaviors([]); }}
                 disabled={!selectedClassId}
                 className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-white text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 <option value="">-- Choose Student --</option>
                 {activeStudents.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
+            </div>
+
+            {/* Behavior Selection */}
+            <div>
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-3 uppercase tracking-wide">Observed Behaviors (Select Multiple)</label>
+              <div className="flex flex-wrap gap-2">
+                {predefinedBehaviors.map(behavior => (
+                  <button
+                    key={behavior}
+                    onClick={() => toggleBehavior(behavior)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${selectedBehaviors.includes(behavior)
+                      ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-600'
+                      : 'bg-slate-50 dark:bg-slate-900/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-600'
+                      }`}
+                  >
+                    {behavior}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

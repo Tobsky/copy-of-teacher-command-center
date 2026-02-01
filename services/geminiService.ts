@@ -17,7 +17,8 @@ export const generateStudentFeedback = async (
   grades: Grade[],
   attendance: AttendanceRecord[],
   startDate?: string,
-  endDate?: string
+  endDate?: string,
+  behaviors: string[] = []
 ): Promise<string> => {
   const ai = getAIClient();
   if (!ai) return "Error: API Key is missing. Please check your configuration.";
@@ -88,8 +89,12 @@ export const generateStudentFeedback = async (
   const lates = studentAttendance.filter(a => a.status === 'Late').length;
   const presents = studentAttendance.filter(a => a.status === 'Present').length;
 
+  const behaviorContext = behaviors.length > 0
+    ? `Observed Behaviors/Attitudes: ${behaviors.join(', ')}`
+    : 'Observed Behaviors: None recorded.';
+
   const prompt = `
-    Role: You are an encouraging but rigorous Computer Science teacher writing a progress report comment.
+    Role: You are an encouraging but rigorous Teacher writing a progress report comment.
     Task: Write a personalized, constructive paragraph (max 120 words) for a student's progress report.
     
     Student: ${student.name}
@@ -105,7 +110,10 @@ ${categoryBreakdown}
     Attendance (${totalRecords} records):
     - Present: ${presents}, Absent: ${absences}, Late: ${lates}
     
+    ${behaviorContext}
+
     Instructions:
+    - Incorporate the observed behaviors into the feedback to make it personal.
     - Reference specific categories where the student excels or needs improvement.
     - If any category average is below 60%, mention it as an area needing attention.
     - If any category average is above 85%, praise the student for it.
