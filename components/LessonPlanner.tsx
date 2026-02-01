@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
-import { Calendar, Plus, Link as LinkIcon, Trash2, ExternalLink, ChevronRight, X, BookOpen, FileText, Video, Image as ImageIcon, AlertCircle, Sparkles, Loader2 } from 'lucide-react';
+import { Calendar, Plus, Link as LinkIcon, Trash2, ExternalLink, ChevronRight, ChevronLeft, X, BookOpen, FileText, Video, Image as ImageIcon, AlertCircle, Sparkles, Loader2 } from 'lucide-react';
 import { Lesson, LessonResource, ResourceType } from '../types';
 import { generateLessonPlan } from '../services/geminiService';
 
@@ -17,6 +17,30 @@ const LessonPlanner: React.FC = () => {
     }, []);
 
     const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+    const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+
+    // Calendar Helpers
+    const getDaysInMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+    const getFirstDayOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+
+    const handlePrevMonth = () => {
+        setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+    };
+
+    const handleNextMonth = () => {
+        setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+    };
+
+    // Auto-switch month when selected date changes externally (e.g. from upcoming list)
+    useEffect(() => {
+        const date = new Date(selectedDate);
+        if (!isNaN(date.getTime())) {
+            // Only update if the month is different to avoid jitter
+            if (date.getMonth() !== currentMonth.getMonth() || date.getFullYear() !== currentMonth.getFullYear()) {
+                setCurrentMonth(new Date(date.getFullYear(), date.getMonth(), 1));
+            }
+        }
+    }, [selectedDate]);
     const [showForm, setShowForm] = useState(false);
     const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
 
@@ -188,12 +212,60 @@ const LessonPlanner: React.FC = () => {
                             </div>
                             Select Date
                         </h3>
-                        <input
-                            type="date"
-                            value={selectedDate}
-                            onChange={(e) => setSelectedDate(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 font-medium transition-all cursor-pointer"
-                        />
+                        {/* Custom Mini Calendar */}
+                        <div className="w-full">
+                            <div className="flex justify-between items-center mb-4 px-1">
+                                <button onClick={handlePrevMonth} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
+                                    <ChevronLeft size={20} className="text-slate-400" />
+                                </button>
+                                <span className="font-bold text-slate-700 dark:text-slate-200">
+                                    {currentMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
+                                </span>
+                                <button onClick={handleNextMonth} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
+                                    <ChevronRight size={20} className="text-slate-400" />
+                                </button>
+                            </div>
+
+                            <div className="grid grid-cols-7 text-center mb-2">
+                                {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+                                    <div key={day} className="text-xs font-bold text-slate-400 uppercase py-1">{day}</div>
+                                ))}
+                            </div>
+
+                            <div className="grid grid-cols-7 gap-1">
+                                {Array.from({ length: getFirstDayOfMonth(currentMonth) }).map((_, i) => (
+                                    <div key={`empty-${i}`} className="aspect-square"></div>
+                                ))}
+
+                                {Array.from({ length: getDaysInMonth(currentMonth) }).map((_, i) => {
+                                    const day = i + 1;
+                                    const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                                    const isSelected = selectedDate === dateStr;
+                                    const hasLesson = lessons.some(l => l.date === dateStr);
+                                    const isToday = new Date().toISOString().split('T')[0] === dateStr;
+
+                                    return (
+                                        <button
+                                            key={day}
+                                            onClick={() => setSelectedDate(dateStr)}
+                                            className={`
+                                                aspect-square rounded-lg flex flex-col items-center justify-center text-sm transition-all relative
+                                                ${isSelected
+                                                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
+                                                    : 'hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'}
+                                                ${hasLesson && !isSelected ? 'font-black text-slate-900 dark:text-white' : ''}
+                                                ${isToday && !isSelected ? 'ring-1 ring-blue-400 dark:ring-blue-500' : ''}
+                                            `}
+                                        >
+                                            <span className={hasLesson && !isSelected ? 'scale-110' : ''}>{day}</span>
+                                            {hasLesson && !isSelected && (
+                                                <div className="w-1 h-1 rounded-full bg-emerald-500 absolute bottom-1.5"></div>
+                                            )}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
                     </div>
 
                     <div className="flex-1 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col min-h-0">
