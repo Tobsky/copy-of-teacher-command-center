@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Plus, X, User, Edit2, Trash2, CheckCircle, Download } from 'lucide-react';
+import { Plus, X, User, Edit2, Trash2, CheckCircle, Download, Settings } from 'lucide-react';
 import PerformanceChart from './PerformanceChart';
 import { Student, Assignment } from '../types';
 
@@ -75,6 +75,7 @@ const Gradebook: React.FC = () => {
   const [newAssignTitle, setNewAssignTitle] = useState('');
   const [newAssignPoints, setNewAssignPoints] = useState('100');
   const [newAssignDate, setNewAssignDate] = useState(new Date().toISOString().split('T')[0]);
+  const [newAssignCategory, setNewAssignCategory] = useState('Homework');
 
   // Edit Assignment State
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
@@ -82,6 +83,47 @@ const Gradebook: React.FC = () => {
   const [editAssignPoints, setEditAssignPoints] = useState('');
   const [editAssignCompleted, setEditAssignCompleted] = useState(false);
   const [editAssignDate, setEditAssignDate] = useState('');
+  const [editAssignCategory, setEditAssignCategory] = useState('Homework');
+
+  // Weight Configuration State
+  const [showWeightConfig, setShowWeightConfig] = useState(false);
+  const [classWeights, setClassWeights] = useState<Record<string, number>>({
+    'Homework': 20,
+    'Test': 30,
+    'Midterm Exam': 20,
+    'End Semester Exam': 30
+  });
+
+  // Load weights from local storage when class changes
+  useEffect(() => {
+    if (selectedClassId) {
+      const saved = localStorage.getItem(`grade_weights_${selectedClassId}`);
+      if (saved) {
+        try {
+          setClassWeights(JSON.parse(saved));
+        } catch (e) {
+          console.error("Failed to parse weights", e);
+        }
+      } else {
+        // Defaults
+        setClassWeights({
+          'Homework': 20,
+          'Test': 30,
+          'Midterm Exam': 20,
+          'End Semester Exam': 30
+        });
+      }
+    }
+  }, [selectedClassId]);
+
+  const saveWeights = () => {
+    if (selectedClassId) {
+      localStorage.setItem(`grade_weights_${selectedClassId}`, JSON.stringify(classWeights));
+      setShowWeightConfig(false);
+      // Force re-render/re-calc happen naturally via state change
+    }
+  };
+
 
   // Student Detail Modal State
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -98,18 +140,45 @@ const Gradebook: React.FC = () => {
 
   const calculateAverage = (studentId: string) => {
     const studentGrades = grades.filter(g => g.studentId === studentId && activeAssignments.some(a => a.id === g.assignmentId));
-    let totalEarned = 0;
-    let totalMax = 0;
+
+    // Group by category
+    const categoryTotals: Record<string, { earned: number, max: number }> = {};
+
+    // Initialize base on known categories to ensure we cover them if they exist in weights
+    Object.keys(classWeights).forEach(cat => {
+      categoryTotals[cat] = { earned: 0, max: 0 };
+    });
 
     studentGrades.forEach(g => {
       const assign = assignments.find(a => a.id === g.assignmentId);
       if (assign) {
-        totalEarned += g.score;
-        totalMax += assign.maxPoints;
+        const cat = assign.category || 'Homework'; // Default to Homework if missing
+        if (!categoryTotals[cat]) categoryTotals[cat] = { earned: 0, max: 0 };
+
+        categoryTotals[cat].earned += g.score;
+        categoryTotals[cat].max += assign.maxPoints;
       }
     });
 
-    return totalMax > 0 ? ((totalEarned / totalMax) * 100).toFixed(1) : 'N/A';
+    let totalWeightedScore = 0;
+    let totalWeightUsed = 0;
+
+    Object.entries(classWeights).forEach(([cat, weight]) => {
+      const totals = categoryTotals[cat];
+      if (totals && totals.max > 0) {
+        const catPercentage = (totals.earned / totals.max) * 100;
+        totalWeightedScore += catPercentage * (weight / 100);
+        totalWeightUsed += (weight / 100);
+      }
+    });
+
+    // If no weights matched or no assignments, fall back to simple average logic strictly? 
+    // Or just re-normalize.
+    if (totalWeightUsed === 0) return 'N/A';
+
+    // Normalize to 100% based on used weights (so if only Homework exists (20%), grade isn't capped at 20%)
+    const finalScore = (totalWeightedScore / totalWeightUsed);
+    return finalScore.toFixed(1);
   };
 
   const handleAddAssignment = (e: React.FormEvent) => {
@@ -120,8 +189,10 @@ const Gradebook: React.FC = () => {
         title: newAssignTitle,
         maxPoints: parseInt(newAssignPoints),
         date: newAssignDate,
-        completed: false
+        completed: false,
+        category: newAssignCategory
       });
+
       setNewAssignTitle('');
       setNewAssignDate(new Date().toISOString().split('T')[0]);
       setShowAddAssign(false);
@@ -134,6 +205,7 @@ const Gradebook: React.FC = () => {
     setEditAssignPoints(assignment.maxPoints.toString());
     setEditAssignCompleted(assignment.completed);
     setEditAssignDate(assignment.date);
+    setEditAssignCategory(assignment.category || 'Homework');
   };
 
   const handleUpdateAssignment = (e: React.FormEvent) => {
@@ -144,7 +216,8 @@ const Gradebook: React.FC = () => {
         title: editAssignTitle,
         maxPoints: parseInt(editAssignPoints),
         date: editAssignDate,
-        completed: editAssignCompleted
+        completed: editAssignCompleted,
+        category: editAssignCategory
       });
       setEditingAssignment(null);
     }
@@ -267,6 +340,14 @@ const Gradebook: React.FC = () => {
           </button>
 
           <button
+            onClick={() => setShowWeightConfig(true)}
+            className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-sm hover:shadow-md"
+            title="Configure Grade Weights"
+          >
+            <Settings size={18} className="text-slate-400 dark:text-slate-400" /> Weights
+          </button>
+
+          <button
             onClick={() => setShowAddAssign(!showAddAssign)}
             className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-600/20 hover:shadow-blue-600/40 hover:-translate-y-0.5 active:translate-y-0"
           >
@@ -274,6 +355,50 @@ const Gradebook: React.FC = () => {
           </button>
         </div>
       </header>
+
+      {/* Grade Weights Modal */}
+      {showWeightConfig && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl w-full max-w-sm shadow-2xl p-6 animate-slide-up">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-purple-600 dark:text-purple-400">
+                  <Settings size={20} />
+                </div>
+                Grade Weights
+              </h3>
+              <button onClick={() => setShowWeightConfig(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><X size={20} /></button>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              {Object.entries(classWeights).map(([cat, weight]) => (
+                <div key={cat} className="flex items-center gap-3">
+                  <label className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-300">{cat}</label>
+                  <div className="relative w-24">
+                    <input
+                      type="number"
+                      value={weight}
+                      onChange={(e) => setClassWeights({ ...classWeights, [cat]: parseFloat(e.target.value) || 0 })}
+                      className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-right text-sm font-bold text-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-purple-500/50"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">%</span>
+                  </div>
+                </div>
+              ))}
+              <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-700">
+                <span className="text-xs font-bold uppercase text-slate-500">Total</span>
+                <span className={`text-sm font-bold ${Object.values(classWeights).reduce((a, b) => a + b, 0) === 100 ? 'text-emerald-500' : 'text-amber-500'}`}>
+                  {Object.values(classWeights).reduce((a, b) => a + b, 0)}%
+                </span>
+              </div>
+            </div>
+
+            <button onClick={saveWeights} className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-purple-600/20 transition-all">
+              Save Configuration
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Add Assignment Form */}
       {showAddAssign && (
@@ -304,6 +429,16 @@ const Gradebook: React.FC = () => {
                 onChange={e => setNewAssignPoints(e.target.value)}
                 className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all placeholder-slate-400"
               />
+            </div>
+            <div className="w-40">
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Category</label>
+              <select
+                value={newAssignCategory}
+                onChange={e => setNewAssignCategory(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all cursor-pointer appearance-none"
+              >
+                {Object.keys(classWeights).map(cat => <option key={cat} value={cat}>{cat}</option>)}
+              </select>
             </div>
             <div className="w-48">
               <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Date</label>
@@ -341,9 +476,14 @@ const Gradebook: React.FC = () => {
                         <span className={`truncate max-w-[120px] font-bold text-sm ${a.completed ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'}`} title={a.title}>{a.title}</span>
                         {a.completed && <CheckCircle size={14} className="text-emerald-500" />}
                       </div>
-                      <span className="text-[10px] bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-300 px-1.5 py-0.5 rounded font-mono">
-                        {a.maxPoints} pts
-                      </span>
+                      <div className="flex items-center gap-1.5 opacity-70">
+                        <span className="text-[9px] uppercase tracking-wide font-bold bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded">
+                          {a.category?.substring(0, 2) || 'HW'}
+                        </span>
+                        <span className="text-[10px] bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-300 px-1.5 py-0.5 rounded font-mono">
+                          {a.maxPoints} pts
+                        </span>
+                      </div>
                       <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Edit2 size={12} className="text-slate-400" />
                       </div>
@@ -451,14 +591,26 @@ const Gradebook: React.FC = () => {
                     className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all placeholder-slate-400"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Date</label>
-                  <input
-                    type="date"
-                    value={editAssignDate}
-                    onChange={e => setEditAssignDate(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all"
-                  />
+                <div className="grid grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Category</label>
+                    <select
+                      value={editAssignCategory}
+                      onChange={e => setEditAssignCategory(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all cursor-pointer appearance-none"
+                    >
+                      {Object.keys(classWeights).map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Date</label>
+                    <input
+                      type="date"
+                      value={editAssignDate}
+                      onChange={e => setEditAssignDate(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all"
+                    />
+                  </div>
                 </div>
               </div>
               <div>
