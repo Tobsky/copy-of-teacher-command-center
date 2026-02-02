@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import { supabase } from './supabaseClient';
 import AuthPage from './components/AuthPage';
 import Sidebar from './components/Sidebar';
@@ -91,6 +92,8 @@ const App: React.FC = () => {
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+
+          <Analytics />
         </main>
       </div>
     </ThemeProvider>
