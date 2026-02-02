@@ -81,15 +81,19 @@ const GradeCurving: React.FC = () => {
                 return;
             }
 
+            // Sort boundaries before saving to ensure consistency
+            const sortedBoundaries = [...editingBoard.boundaries].sort((a, b) => b.minScore - a.minScore);
+            const boardToSave = { ...editingBoard, boundaries: sortedBoundaries };
+
             let result: ExamBoard | null = null;
 
-            if (editingBoard.id.startsWith('new-')) {
+            if (boardToSave.id.startsWith('new-')) {
                 // New board from "Create New"
-                const { id, ...boardPayload } = editingBoard;
+                const { id, ...boardPayload } = boardToSave;
                 result = await addExamBoard(boardPayload);
             } else {
                 // Existing board
-                result = await updateExamBoard(editingBoard);
+                result = await updateExamBoard(boardToSave);
             }
 
             if (result) {
@@ -745,7 +749,8 @@ const GradeCurving: React.FC = () => {
                                                 onChange={(e) => {
                                                     const newBoundaries = [...editingBoard.boundaries];
                                                     newBoundaries[idx] = { ...boundary, minScore: parseInt(e.target.value) || 0 };
-                                                    setEditingBoard({ ...editingBoard, boundaries: newBoundaries.sort((a, b) => b.minScore - a.minScore) });
+                                                    // Don't sort on change to prevent UI jumping
+                                                    setEditingBoard({ ...editingBoard, boundaries: newBoundaries });
                                                 }}
                                                 className="w-20 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-sm text-center text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-purple-500/20"
                                             />

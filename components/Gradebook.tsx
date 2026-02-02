@@ -4,6 +4,61 @@ import { Plus, X, User, Edit2, Trash2, CheckCircle, Download } from 'lucide-reac
 import PerformanceChart from './PerformanceChart';
 import { Student, Assignment } from '../types';
 
+
+// Optimized Cell Component to prevent re-renders on every keystroke
+const GradeCell = React.memo(({
+  studentId,
+  assignmentId,
+  initialScore,
+  onSave,
+  isCompleted
+}: {
+  studentId: string,
+  assignmentId: string,
+  initialScore: number | string,
+  onSave: (val: number) => void,
+  isCompleted: boolean
+}) => {
+  const [value, setValue] = useState(initialScore.toString());
+
+  // Sync with prop if it changes externally
+  useEffect(() => {
+    setValue(initialScore.toString());
+  }, [initialScore]);
+
+  const handleBlur = () => {
+    const num = parseFloat(value);
+    if (!isNaN(num) && num !== initialScore) {
+      onSave(num);
+    } else if (value === '' && initialScore !== '') {
+      // Option: Handle clearing grade? 
+      // For now, if empty, reset to initial or handle as 0 if desired.
+      // If sticking to previous logic:
+      setValue(initialScore.toString());
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      (e.target as HTMLInputElement).blur();
+    }
+  };
+
+  return (
+    <div className="relative w-full h-full group/cell">
+      <input
+        type="number"
+        value={value === 'NaN' ? '' : value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        className={`w-full h-full py-4 bg-transparent text-center hover:bg-white dark:hover:bg-slate-700 focus:bg-white dark:focus:bg-slate-600 focus:ring-2 focus:ring-inset focus:ring-blue-500 focus:outline-none font-mono font-medium text-slate-700 dark:text-slate-200 transition-all
+            ${isCompleted ? 'opacity-60 focus:opacity-100' : ''}`}
+        placeholder="-"
+      />
+    </div>
+  );
+});
 const Gradebook: React.FC = () => {
   const { classes, students, assignments, grades, updateGrade, addAssignment, updateAssignment, deleteAssignment, fetchClasses, fetchStudents, fetchAssignments, fetchGrades } = useAppContext();
 
@@ -39,12 +94,7 @@ const Gradebook: React.FC = () => {
     return grades.find(g => g.studentId === studentId && g.assignmentId === assignmentId)?.score || '';
   };
 
-  const handleGradeChange = (studentId: string, assignmentId: string, value: string) => {
-    const numValue = parseFloat(value);
-    if (!isNaN(numValue)) {
-      updateGrade({ studentId, assignmentId, score: numValue });
-    }
-  };
+  /* Removed handleGradeChange - moved to GradeCell onSave */
 
   const calculateAverage = (studentId: string) => {
     const studentGrades = grades.filter(g => g.studentId === studentId && activeAssignments.some(a => a.id === g.assignmentId));
@@ -331,16 +381,13 @@ const Gradebook: React.FC = () => {
                     </td>
                     {activeAssignments.map(a => (
                       <td key={a.id} className={`px-0 py-0 text-center border-r border-slate-100 dark:border-slate-700/50 p-0 ${a.completed ? 'bg-slate-50/50 dark:bg-slate-900/30' : ''}`}>
-                        <div className="relative w-full h-full group/cell">
-                          <input
-                            type="number"
-                            value={getStudentGrade(student.id, a.id)}
-                            onChange={(e) => handleGradeChange(student.id, a.id, e.target.value)}
-                            className={`w-full h-full py-4 bg-transparent text-center hover:bg-white dark:hover:bg-slate-700 focus:bg-white dark:focus:bg-slate-600 focus:ring-2 focus:ring-inset focus:ring-blue-500 focus:outline-none font-mono font-medium text-slate-700 dark:text-slate-200 transition-all
-                                ${a.completed ? 'opacity-60 focus:opacity-100' : ''}`}
-                            placeholder="-"
-                          />
-                        </div>
+                        <GradeCell
+                          studentId={student.id}
+                          assignmentId={a.id}
+                          initialScore={getStudentGrade(student.id, a.id)}
+                          onSave={(score) => updateGrade({ studentId: student.id, assignmentId: a.id, score })}
+                          isCompleted={a.completed}
+                        />
                       </td>
                     ))}
                   </tr>
