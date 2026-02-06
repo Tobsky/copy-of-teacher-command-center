@@ -18,7 +18,8 @@ export const generateStudentFeedback = async (
   attendance: AttendanceRecord[],
   startDate?: string,
   endDate?: string,
-  behaviors: string[] = []
+  behaviors: string[] = [],
+  focusAssignmentId?: string
 ): Promise<string> => {
   const ai = getAIClient();
   if (!ai) return "Error: API Key is missing. Please check your configuration.";
@@ -93,12 +94,37 @@ export const generateStudentFeedback = async (
     ? `Observed Behaviors/Attitudes: ${behaviors.join(', ')}`
     : 'Observed Behaviors: None recorded.';
 
+  // --- Construct Prompt ---
+  let promptTask = "Task: Write a personalized, constructive paragraph (max 120 words) for a student's progress report.";
+  let focusContext = "";
+
+  if (focusAssignmentId) {
+    const focusAssign = assignments.find(a => a.id === focusAssignmentId);
+    if (focusAssign) {
+      const focusScore = gradeMap.get(focusAssign.id);
+      const focusGradeStr = focusScore !== undefined ? `${focusScore}/${focusAssign.maxPoints} (${((focusScore / focusAssign.maxPoints) * 100).toFixed(1)}%)` : "Not submitted / Missing";
+
+      promptTask = `Task: Write a specific feedback comment (max 80 words) focusing primarily on the student's performance on the assignment: "${focusAssign.title}".`;
+      focusContext = `
+      FOCUS ASSIGNMENT DETAILS:
+      - Assignment: ${focusAssign.title}
+      - Date: ${focusAssign.date}
+      - Category: ${focusAssign.category}
+      - Student Grade: ${focusGradeStr}
+      `;
+    }
+  }
+
   const prompt = `
-    Role: You are an encouraging but rigorous Teacher writing a progress report comment.
-    Task: Write a personalized, constructive paragraph (max 120 words) for a student's progress report.
+    Role: You are an encouraging but rigorous Teacher.
+    ${promptTask}
     
     Student: ${student.name}
     Class: ${clazz.name} (${clazz.section})
+    
+    ${focusContext}
+
+    Overall Performance Context (for reference):
     
     Performance Summary:
     - Overall Average: ${overallAverage.toFixed(1)}%
@@ -113,6 +139,7 @@ ${categoryBreakdown}
     ${behaviorContext}
 
     Instructions:
+    - ${focusAssignmentId ? "Focus mainly on the specific assignment mentioned above." : "Summarize overall progress."}
     - Incorporate the observed behaviors into the feedback to make it personal.
     - Reference specific categories where the student excels or needs improvement.
     - If any category average is below 60%, mention it as an area needing attention.

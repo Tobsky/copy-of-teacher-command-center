@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { generateStudentFeedback } from '../services/geminiService';
-import { Sparkles, Loader2, Copy } from 'lucide-react';
+import { Sparkles, Loader2, Copy, Printer } from 'lucide-react';
+import ReportCard from './ReportCard';
 
 const SmartFeedback: React.FC = () => {
   const { classes, students, assignments, grades, attendance, fetchClasses, fetchStudents, fetchAssignments, fetchGrades, fetchAttendance } = useAppContext();
@@ -15,6 +16,7 @@ const SmartFeedback: React.FC = () => {
   }, []);
   const [selectedClassId, setSelectedClassId] = useState<string>(classes[0]?.id || '');
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState<string>('');
 
   // Date range for filtering
   const [startDate, setStartDate] = useState<string>('');
@@ -23,8 +25,10 @@ const SmartFeedback: React.FC = () => {
   const [feedback, setFeedback] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [selectedBehaviors, setSelectedBehaviors] = useState<string[]>([]);
+  const [showReportCard, setShowReportCard] = useState(false);
 
   const activeStudents = students.filter(s => s.classId === selectedClassId);
+  const activeAssignments = assignments.filter(a => a.classId === selectedClassId); // Filter for selector
 
   const predefinedBehaviors = [
     "Participative", "Hardworking", "Distracted", "Helpful",
@@ -49,7 +53,17 @@ const SmartFeedback: React.FC = () => {
     if (student && clazz) {
       setLoading(true);
       setFeedback('');
-      const result = await generateStudentFeedback(student, clazz, assignments, grades, attendance, startDate, endDate, selectedBehaviors);
+      const result = await generateStudentFeedback(
+        student,
+        clazz,
+        assignments,
+        grades,
+        attendance,
+        startDate,
+        endDate,
+        selectedBehaviors,
+        selectedAssignmentId // Pass focused assignment
+      );
       setFeedback(result);
       setLoading(false);
     }
@@ -142,6 +156,19 @@ const SmartFeedback: React.FC = () => {
                 />
               </div>
             </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Focus on Assignment (Optional)</label>
+              <select
+                value={selectedAssignmentId}
+                onChange={(e) => setSelectedAssignmentId(e.target.value)}
+                disabled={!selectedClassId}
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-white text-sm font-medium rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all disabled:opacity-50"
+              >
+                <option value="">-- General Progress Report --</option>
+                {activeAssignments.map(a => <option key={a.id} value={a.id}>{a.title} ({a.date})</option>)}
+              </select>
+            </div>
             <p className="text-xs text-slate-400 dark:text-slate-500 italic bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700/50">
               Tip: Leave dates blank to analyze the entire academic year.
             </p>
@@ -169,17 +196,25 @@ const SmartFeedback: React.FC = () => {
 
           <div className="flex-1 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 relative overflow-hidden group">
             {feedback ? (
-              <div className="h-auto lg:h-full lg:overflow-y-auto custom-scrollbar pr-2">
-                <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-serif text-lg tracking-wide whitespace-pre-line">{feedback}</p>
-                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="h-auto lg:h-full lg:overflow-y-auto custom-scrollbar pr-2 flex flex-col">
+                <div className="flex justify-end gap-2 mb-4">
                   <button
                     onClick={() => navigator.clipboard.writeText(feedback)}
-                    className="p-2.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm transition-all active:scale-95"
-                    title="Copy to clipboard"
+                    className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-purple-600 dark:text-slate-400 dark:hover:text-purple-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg transition-colors"
                   >
-                    <Copy size={18} />
+                    <Copy size={16} />
+                    Copy Text
+                  </button>
+
+                  <button
+                    onClick={() => setShowReportCard(true)}
+                    className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    <Printer size={16} />
+                    Print Official Report
                   </button>
                 </div>
+                <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-serif text-lg tracking-wide whitespace-pre-line">{feedback}</p>
               </div>
             ) : (
               <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 p-8 text-center opacity-60">
@@ -195,6 +230,22 @@ const SmartFeedback: React.FC = () => {
           </div>
         </div>
       </div>
+
+
+      {/* Report Card Modal */}
+      {
+        showReportCard && selectedStudentId && selectedClassId && (
+          <ReportCard
+            student={students.find(s => s.id === selectedStudentId)!}
+            clazz={classes.find(c => c.id === selectedClassId)!}
+            assignments={assignments}
+            grades={grades}
+            attendance={attendance}
+            feedback={feedback}
+            onClose={() => setShowReportCard(false)}
+          />
+        )
+      }
     </div>
   );
 };

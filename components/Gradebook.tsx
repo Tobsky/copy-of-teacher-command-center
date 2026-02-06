@@ -11,12 +11,14 @@ const GradeCell = React.memo(({
   assignmentId,
   initialScore,
   onSave,
+  onDelete,
   isCompleted
 }: {
   studentId: string,
   assignmentId: string,
   initialScore: number | string,
   onSave: (val: number) => void,
+  onDelete: () => void,
   isCompleted: boolean
 }) => {
   const [value, setValue] = useState(initialScore.toString());
@@ -31,10 +33,8 @@ const GradeCell = React.memo(({
     if (!isNaN(num) && num !== initialScore) {
       onSave(num);
     } else if (value === '' && initialScore !== '') {
-      // Option: Handle clearing grade? 
-      // For now, if empty, reset to initial or handle as 0 if desired.
-      // If sticking to previous logic:
-      setValue(initialScore.toString());
+      onDelete();
+      setValue(''); // Clear local immediately
     }
   };
 
@@ -60,7 +60,7 @@ const GradeCell = React.memo(({
   );
 });
 const Gradebook: React.FC = () => {
-  const { classes, students, assignments, grades, updateGrade, addAssignment, updateAssignment, deleteAssignment, fetchClasses, fetchStudents, fetchAssignments, fetchGrades } = useAppContext();
+  const { classes, students, assignments, grades, updateGrade, deleteGrade, purgeEmptyGrades, addAssignment, updateAssignment, deleteAssignment, fetchClasses, fetchStudents, fetchAssignments, fetchGrades } = useAppContext();
 
   useEffect(() => {
     fetchClasses();
@@ -167,8 +167,8 @@ const Gradebook: React.FC = () => {
       const totals = categoryTotals[cat];
       if (totals && totals.max > 0) {
         const catPercentage = (totals.earned / totals.max) * 100;
-        totalWeightedScore += catPercentage * (weight / 100);
-        totalWeightUsed += (weight / 100);
+        totalWeightedScore += catPercentage * ((weight as number) / 100);
+        totalWeightUsed += ((weight as number) / 100);
       }
     });
 
@@ -309,6 +309,16 @@ const Gradebook: React.FC = () => {
     }).filter(d => d.value > 0);
   };
 
+
+  const handlePurge = async () => {
+    if (confirm("Are you sure you want to delete all '0' grades? This will make them 'missing' (empty) instead of zero.")) {
+      const success = await purgeEmptyGrades();
+      if (success) {
+        alert("Cleanup complete! 0 grades have been removed.");
+      }
+    }
+  };
+
   return (
     <div className="h-full flex flex-col space-y-8 relative animate-fade-in pb-6">
       <header className="flex justify-between items-end flex-wrap gap-6">
@@ -337,6 +347,15 @@ const Gradebook: React.FC = () => {
             title="Export as CSV"
           >
             <Download size={18} className="text-slate-400 dark:text-slate-400" /> Export CSV
+          </button>
+
+          <button
+            onClick={handlePurge}
+            className="bg-white dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/10 text-slate-600 dark:text-slate-200 hover:text-red-600 dark:hover:text-red-400 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-sm hover:shadow-md"
+            title="Remove all 0 grades"
+          >
+            <Trash2 size={18} className="text-slate-400 dark:text-slate-400 group-hover:text-red-500" />
+            <span className="hidden sm:inline">Clean Data</span>
           </button>
 
           <button
@@ -387,8 +406,8 @@ const Gradebook: React.FC = () => {
               ))}
               <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-700">
                 <span className="text-xs font-bold uppercase text-slate-500">Total</span>
-                <span className={`text-sm font-bold ${Object.values(classWeights).reduce((a, b) => a + b, 0) === 100 ? 'text-emerald-500' : 'text-amber-500'}`}>
-                  {Object.values(classWeights).reduce((a, b) => a + b, 0)}%
+                <span className={`text-sm font-bold ${(Object.values(classWeights) as number[]).reduce((a, b) => a + b, 0) === 100 ? 'text-emerald-500' : 'text-amber-500'}`}>
+                  {(Object.values(classWeights) as number[]).reduce((a, b) => a + b, 0)}%
                 </span>
               </div>
             </div>
@@ -526,6 +545,7 @@ const Gradebook: React.FC = () => {
                           assignmentId={a.id}
                           initialScore={getStudentGrade(student.id, a.id)}
                           onSave={(score) => updateGrade({ studentId: student.id, assignmentId: a.id, score })}
+                          onDelete={() => deleteGrade(student.id, a.id)}
                           isCompleted={a.completed}
                         />
                       </td>

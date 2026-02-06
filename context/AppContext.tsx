@@ -30,6 +30,8 @@ interface AppContextType {
   updateAssignment: (assignment: Assignment) => Promise<void>;
   deleteAssignment: (id: string) => Promise<void>;
   updateGrade: (grade: Grade) => Promise<void>;
+  deleteGrade: (studentId: string, assignmentId: string) => Promise<void>;
+  purgeEmptyGrades: () => Promise<boolean>;
   updateAttendance: (record: AttendanceRecord) => Promise<void>;
   addSnippet: (snippet: Omit<Snippet, 'id'>) => Promise<void>;
   deleteSnippet: (id: string) => Promise<void>;
@@ -276,12 +278,42 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  const deleteGrade = async (studentId: string, assignmentId: string) => {
+    const { error } = await supabase.from('grades')
+      .delete()
+      .match({ student_id: studentId, assignment_id: assignmentId });
+
+    if (!error) {
+      setGrades(prev => prev.filter(g => !(g.studentId === studentId && g.assignmentId === assignmentId)));
+    } else {
+      console.error("Error deleting grade:", error);
+    }
+  };
+
+  const purgeEmptyGrades = async () => {
+    // Delete all grades where score is 0
+    const { error } = await supabase.from('grades')
+      .delete()
+      .eq('score', 0);
+
+    if (!error) {
+      // Optimistically remove 0s from local state
+      setGrades(prev => prev.filter(g => g.score !== 0));
+      return true;
+    } else {
+      console.error("Error purging empty grades:", error);
+      return false;
+    }
+  };
+
   const updateAttendance = async (record: AttendanceRecord) => {
     if (!session) return;
     const payload = toSnakeCase({
       ...record,
       userId: session.user.id
     });
+    // Remove empty ID so Postgres generates a new UUID or handles conflict correctly
+    if (!payload.id) delete payload.id;
 
     const { data, error } = await supabase.from('attendance').upsert(payload, { onConflict: 'student_id, date, class_id' }).select();
 

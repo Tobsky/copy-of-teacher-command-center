@@ -299,20 +299,11 @@ const ExcelImporter: React.FC<ExcelImporterProps> = ({ onImportComplete, classes
 
     return (
         <div className="animate-fade-in w-full">
-            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-6 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                    <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg text-emerald-600 dark:text-emerald-400">
-                        <FileSpreadsheet size={20} />
-                    </div>
-                    Import from Excel
+            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+                <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg text-emerald-600 dark:text-emerald-400">
+                    <FileSpreadsheet size={20} />
                 </div>
-                <button
-                    onClick={downloadTemplate}
-                    className="text-sm flex items-center gap-2 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium px-3 py-1.5 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
-                >
-                    <Upload size={16} className="rotate-180" /> {/* Reusing Upload icon rotated as Download */}
-                    Download Template
-                </button>
+                Import from Excel
             </h3>
 
             <div className="space-y-6">
@@ -331,6 +322,16 @@ const ExcelImporter: React.FC<ExcelImporterProps> = ({ onImportComplete, classes
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
                         </div>
                     </div>
+                </div>
+
+                <div className="flex justify-end">
+                    <button
+                        onClick={downloadTemplate}
+                        className="text-xs flex items-center gap-1.5 text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 font-bold transition-colors"
+                    >
+                        <Upload size={14} className="rotate-180" />
+                        Need a template? Download here
+                    </button>
                 </div>
 
                 <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-8 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all group">
