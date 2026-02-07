@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   LayoutDashboard,
   Users,
@@ -11,11 +11,13 @@ import {
   BookOpen,
   Calculator,
   Sun,
-  Moon
+  Moon,
+  Calendar
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
+import SessionManager from './SessionManager';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -23,10 +25,11 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
-  const { logout } = useAppContext();
+  const { logout, activeSession } = useAppContext();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+  const [showSessionManager, setShowSessionManager] = useState(false);
 
   const navItems = [
     { path: '/', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
@@ -71,6 +74,24 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           </button>
         </div>
 
+        {/* Active Session Display */}
+        <div className="px-6 mb-4">
+          <button
+            onClick={() => setShowSessionManager(true)}
+            className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl p-3 flex items-center justify-between group hover:border-indigo-300 dark:hover:border-indigo-700 transition-all"
+          >
+            <div>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Academic Session</p>
+              <div className="font-bold text-slate-700 dark:text-slate-200 text-sm flex items-center gap-1.5">
+                {activeSession ? activeSession.name : <span className="text-amber-500 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Set Session</span>}
+              </div>
+            </div>
+            <div className="bg-white dark:bg-slate-700 p-1.5 rounded-lg text-slate-400 group-hover:text-indigo-500 transition-colors shadow-sm">
+              <Calendar size={14} />
+            </div>
+          </button>
+        </div>
+
         <nav className="flex-1 px-4 overflow-y-auto custom-scrollbar">
           <ul className="space-y-1">
             {navItems.map((item) => {
@@ -105,6 +126,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             <div
               className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white dark:bg-slate-700 rounded-lg shadow-sm transition-all duration-300 left-1 ${theme === 'dark' ? 'translate-x-[100%]' : ''}`}
             />
+            {/* ... (Theme buttons kept same, using simpler syntax for brevity if needed or just copy paste) */}
             <button
               onClick={() => theme === 'dark' && toggleTheme()}
               className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-medium rounded-lg relative z-10 transition-colors ${theme === 'light' ? 'text-indigo-600' : 'text-slate-500'}`}
@@ -132,6 +154,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             <span className="text-xs font-medium text-slate-400">System Online</span>
           </div>
         </div>
+
+        {/* Session Manager Modal */}
+        {showSessionManager && (
+          <SessionManager onClose={() => setShowSessionManager(false)} />
+        )}
+
       </div>
     </>
   );

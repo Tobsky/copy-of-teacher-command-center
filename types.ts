@@ -1,9 +1,19 @@
+export interface AcademicSession {
+  id: string;
+  name: string;
+  type: 'semester' | 'trimester';
+  startDate?: string;
+  endDate?: string;
+  isActive: boolean;
+}
+
 export interface ClassGroup {
   id: string;
   name: string;
   section: string;
   schedule: string;
   curriculumId?: string | null;
+  sessionId?: string | null;
 }
 
 export interface Student {

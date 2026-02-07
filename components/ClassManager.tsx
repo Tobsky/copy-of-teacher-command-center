@@ -3,6 +3,7 @@ import { useAppContext } from '../context/AppContext';
 import { Users, Plus, UserPlus, Trash2, Search, X, ChevronRight, GraduationCap, Download, Mail, Edit2 } from 'lucide-react';
 import ExcelImporter from './ExcelImporter';
 import StudentProfileModal from './StudentProfileModal';
+import PromoteClassModal from './PromoteClassModal';
 import { Student } from '../types';
 
 const ClassManager: React.FC = () => {
@@ -19,6 +20,7 @@ const ClassManager: React.FC = () => {
   const [showAddStudent, setShowAddStudent] = useState(false);
   const [showImporter, setShowImporter] = useState(false);
   const [showEditClass, setShowEditClass] = useState(false);
+  const [showPromoteModal, setShowPromoteModal] = useState(false);
 
   // Edit Class Form State
   const [editClassId, setEditClassId] = useState<string>('');
@@ -93,6 +95,16 @@ const ClassManager: React.FC = () => {
             Classes
           </h2>
           <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-bold px-2 py-1 rounded-full">{classes.length}</span>
+        </div>
+
+        {/* Actions Row */}
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => setShowPromoteModal(true)}
+            className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-sm"
+          >
+            <Download size={14} /> Promote Class
+          </button>
         </div>
 
         <div className="flex-1 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl overflow-hidden flex flex-col shadow-xl shadow-slate-200/50 dark:shadow-none animate-slide-up">
@@ -361,6 +373,7 @@ const ClassManager: React.FC = () => {
       )}
 
       {/* Edit Class Modal */}
+      {/* Edit Class Modal */}
       {showEditClass && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-8 w-full max-w-sm shadow-2xl relative animate-scale-in">
@@ -425,14 +438,22 @@ const ClassManager: React.FC = () => {
         </div>
       )}
 
-      {selectedStudent && (
-        <StudentProfileModal
-          student={selectedStudent}
-          onClose={() => setSelectedStudent(null)}
-          initialTab="overview"
-        />
-      )}
-    </div>
+      {
+        showPromoteModal && (
+          <PromoteClassModal onClose={() => setShowPromoteModal(false)} />
+        )
+      }
+
+      {
+        selectedStudent && (
+          <StudentProfileModal
+            student={selectedStudent}
+            onClose={() => setSelectedStudent(null)}
+            initialTab="overview"
+          />
+        )
+      }
+    </div >
   );
 };
 
