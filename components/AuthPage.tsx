@@ -37,6 +37,20 @@ const AuthPage: React.FC = () => {
                 });
                 if (error) throw error;
             } else {
+                // 1. Check if email already exists
+                const { data: emailTaken, error: checkError } = await supabase.rpc('email_exists', {
+                    email_check: email
+                });
+
+                if (checkError) {
+                    console.error("Error checking email:", checkError);
+                    // Fallback: Proceed with signup anyway if check fails (e.g. function missing)
+                }
+
+                if (emailTaken) {
+                    throw new Error("This email is already registered. Please log in instead.");
+                }
+
                 const { error } = await supabase.auth.signUp({
                     email,
                     password,
