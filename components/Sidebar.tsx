@@ -49,7 +49,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     <>
       {/* Mobile Overlay */}
       <div
-        className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={onClose}
       />
 
@@ -57,7 +57,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         fixed top-0 left-0 z-50 h-[calc(100vh-2rem)] w-64 m-4 rounded-3xl flex flex-col
         transform transition-all duration-300 ease-in-out shadow-2xl shadow-slate-200/50 dark:shadow-slate-900/50
         bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-white/20 dark:border-slate-800
-        ${isOpen ? 'translate-x-0' : '-translate-x-[120%]'} md:translate-x-0
+        ${isOpen ? 'translate-x-0' : '-translate-x-[120%]'} lg:translate-x-0
       `}>
         <div className="p-6 flex justify-between items-center">
           <div>
@@ -66,7 +66,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             </h1>
             <p className="text-[10px] text-slate-400 font-medium tracking-wide uppercase mt-1">Command Center v1.0</p>
           </div>
-          <button onClick={onClose} className="md:hidden text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+          <button onClick={onClose} className="lg:hidden text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
             <X size={20} />
           </button>
         </div>

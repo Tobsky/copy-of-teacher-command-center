@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { AttendanceStatus } from '../types';
+import { AttendanceStatus, Student } from '../types';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import StudentProfileModal from './StudentProfileModal';
 
 const Attendance: React.FC = () => {
   const { classes, students, attendance, updateAttendance, fetchClasses, fetchStudents, fetchAttendance } = useAppContext();
@@ -13,6 +14,7 @@ const Attendance: React.FC = () => {
   }, []);
   const [selectedClassId, setSelectedClassId] = useState<string>(classes[0]?.id || '');
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
   const activeStudents = students.filter(s => s.classId === selectedClassId);
 
@@ -76,14 +78,17 @@ const Attendance: React.FC = () => {
         </div>
       </header>
 
-      <div className="flex-1 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl overflow-hidden shadow-xl shadow-slate-200/50 dark:shadow-none animate-slide-up delay-100 flex flex-col">
+      <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl overflow-hidden shadow-xl shadow-slate-200/50 dark:shadow-none animate-slide-up delay-100 flex flex-col">
         <div className="p-8 overflow-y-auto custom-scrollbar flex-1">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {activeStudents.length > 0 ? activeStudents.map(student => {
               const currentStatus = getStatus(student.id);
               return (
                 <div key={student.id} className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 flex flex-col gap-4 hover:shadow-lg hover:border-blue-400/30 dark:hover:border-blue-500/30 transition-all group">
-                  <div className="flex items-center gap-4">
+                  <div
+                    className="flex items-center gap-4 cursor-pointer"
+                    onClick={() => setSelectedStudent(student)}
+                  >
                     <div className="w-12 h-12 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-300 font-bold border border-slate-100 dark:border-slate-700 shadow-sm group-hover:scale-105 transition-transform text-lg">
                       {student.name.charAt(0)}
                     </div>
@@ -122,6 +127,14 @@ const Attendance: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {selectedStudent && (
+        <StudentProfileModal
+          student={selectedStudent}
+          onClose={() => setSelectedStudent(null)}
+          initialTab="attendance"
+        />
+      )}
     </div>
   );
 };

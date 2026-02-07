@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Users, Plus, UserPlus, Trash2, Search, X, ChevronRight, GraduationCap, Download, Mail, Edit2 } from 'lucide-react';
 import ExcelImporter from './ExcelImporter';
+import StudentProfileModal from './StudentProfileModal';
+import { Student } from '../types';
 
 const ClassManager: React.FC = () => {
   const { classes, students, addClass, updateClass, deleteClass, addStudent, deleteStudent, fetchClasses, fetchStudents } = useAppContext();
@@ -12,6 +14,7 @@ const ClassManager: React.FC = () => {
   }, []);
 
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showAddClass, setShowAddClass] = useState(false);
   const [showAddStudent, setShowAddStudent] = useState(false);
   const [showImporter, setShowImporter] = useState(false);
@@ -208,7 +211,11 @@ const ClassManager: React.FC = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
                   {classStudents.length > 0 ? classStudents.map(student => (
-                    <tr key={student.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/20 transition-colors group">
+                    <tr
+                      key={student.id}
+                      className="hover:bg-slate-50 dark:hover:bg-slate-700/20 transition-colors group cursor-pointer"
+                      onClick={() => setSelectedStudent(student)}
+                    >
                       <td className="px-6 py-4">
                         <div className="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xs font-bold">
@@ -224,7 +231,7 @@ const ClassManager: React.FC = () => {
                       <td className="px-6 py-4 font-mono text-xs text-slate-500 dark:text-slate-400 hidden sm:table-cell">{student.email}</td>
                       <td className="px-6 py-4 text-right">
                         <button
-                          onClick={() => deleteStudent(student.id)}
+                          onClick={(e) => { e.stopPropagation(); deleteStudent(student.id); }}
                           className="text-slate-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-0 group-hover:opacity-100"
                           title="Remove student"
                         >
@@ -416,6 +423,14 @@ const ClassManager: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {selectedStudent && (
+        <StudentProfileModal
+          student={selectedStudent}
+          onClose={() => setSelectedStudent(null)}
+          initialTab="overview"
+        />
       )}
     </div>
   );

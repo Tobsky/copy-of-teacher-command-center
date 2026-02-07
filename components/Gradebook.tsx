@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Plus, X, User, Edit2, Trash2, CheckCircle, Download, Settings } from 'lucide-react';
 import PerformanceChart from './PerformanceChart';
+import StudentProfileModal from './StudentProfileModal';
 import { Student, Assignment } from '../types';
 
 
@@ -289,25 +290,7 @@ const Gradebook: React.FC = () => {
     }
   };
 
-  const getStudentPerformanceData = () => {
-    if (!selectedStudent) return [];
 
-    const classAssignments = assignments
-      .filter(a => a.classId === selectedStudent.classId)
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-    return classAssignments.map(assign => {
-      const grade = grades.find(g => g.studentId === selectedStudent.id && g.assignmentId === assign.id);
-      const score = grade ? grade.score : 0;
-      const percentage = assign.maxPoints > 0 ? (score / assign.maxPoints) * 100 : 0;
-
-      return {
-        label: new Date(assign.date).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' }),
-        value: parseFloat(percentage.toFixed(1)),
-        subLabel: assign.title
-      };
-    }).filter(d => d.value > 0);
-  };
 
 
   const handlePurge = async () => {
@@ -667,66 +650,11 @@ const Gradebook: React.FC = () => {
 
       {/* Student Detail Modal */}
       {selectedStudent && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh] animate-slide-up">
-            <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/30">
-              <div>
-                <h2 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
-                  <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-full text-indigo-600 dark:text-indigo-400">
-                    <User size={24} />
-                  </div>
-                  {selectedStudent.name}
-                </h2>
-                <div className="flex items-center gap-3 mt-2 ml-14">
-                  <span className="text-slate-500 dark:text-slate-400 text-sm font-mono">{selectedStudent.email}</span>
-                  <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-                  <span className="text-slate-400 text-xs uppercase font-bold tracking-wider">ID: {selectedStudent.id.substring(0, 8)}...</span>
-                </div>
-              </div>
-              <button
-                onClick={() => setSelectedStudent(null)}
-                className="p-2 bg-slate-100 dark:bg-slate-700/50 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            <div className="p-8 overflow-y-auto custom-scrollbar">
-              <PerformanceChart
-                data={getStudentPerformanceData()}
-                title="Performance Timeline"
-                subtitle={`Grade history for ${selectedStudent.name}`}
-                color="#34d399" // Emerald-400
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-                <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 flex flex-col items-center text-center hover:shadow-lg transition-shadow">
-                  <span className="text-slate-500 dark:text-slate-400 text-xs uppercase font-bold tracking-wider mb-2">Current Average</span>
-                  <div className="text-4xl font-extrabold text-emerald-500 dark:text-emerald-400">{calculateAverage(selectedStudent.id)}%</div>
-                  <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full mt-4 overflow-hidden">
-                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${parseFloat(calculateAverage(selectedStudent.id))}%` }}></div>
-                  </div>
-                </div>
-                <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 flex flex-col items-center text-center hover:shadow-lg transition-shadow">
-                  <span className="text-slate-500 dark:text-slate-400 text-xs uppercase font-bold tracking-wider mb-2">Assignments Submitted</span>
-                  <div className="text-4xl font-extrabold text-blue-500 dark:text-blue-400">
-                    {getStudentPerformanceData().filter(d => d.value > 0).length} <span className="text-xl text-slate-400 font-medium">/ {activeAssignments.length}</span>
-                  </div>
-                  <div className="text-xs text-slate-400 mt-3 font-medium">
-                    Completion Rate: {activeAssignments.length > 0 ? Math.round((getStudentPerformanceData().filter(d => d.value > 0).length / activeAssignments.length) * 100) : 0}%
-                  </div>
-                </div>
-                <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 flex flex-col items-center text-center hover:shadow-lg transition-shadow">
-                  <span className="text-slate-500 dark:text-slate-400 text-xs uppercase font-bold tracking-wider mb-2">Class Rank</span>
-                  <div className="text-4xl font-extrabold text-purple-500 dark:text-purple-400">Top 15%</div>
-                  <div className="text-xs text-slate-400 mt-3 font-medium">
-                    Percentile: 85th
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <StudentProfileModal
+          student={selectedStudent}
+          onClose={() => setSelectedStudent(null)}
+          initialTab="overview"
+        />
       )}
     </div>
   );
