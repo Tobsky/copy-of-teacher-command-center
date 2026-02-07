@@ -528,11 +528,11 @@ const SyllabusHub: React.FC = () => {
                     )}
 
                     {/* Mastery Tracker List */}
-                    <div className="min-h-[500px] lg:min-h-0 flex-1 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-6 shadow-xl shadow-slate-200/50 dark:shadow-none lg:overflow-hidden flex flex-col">
+                    <div className="flex-1 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-6 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden flex flex-col min-h-[400px]">
                         <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">
                             Topics ({trackerCount})
                         </h3>
-                        <div className="flex-1 lg:overflow-y-auto custom-scrollbar space-y-4 pr-2">
+                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-2">
                             {/* Group by Root/Chapter logic for Tracker */}
                             {(() => {
                                 if (trackerHierarchy.roots.length === 0 && filteredTrackerTopics.length === 0) {

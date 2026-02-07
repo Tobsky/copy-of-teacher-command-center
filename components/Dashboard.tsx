@@ -58,7 +58,7 @@ const Dashboard: React.FC = () => {
         <p className="text-slate-500 dark:text-slate-400">Welcome back, Professor. Here is your daily overview.</p>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
 
         {/* Quick Stats Widget */}
         <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-xl shadow-slate-200/50 dark:shadow-none animate-slide-up border border-slate-100 dark:border-slate-700/50">
