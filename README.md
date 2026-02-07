@@ -24,4 +24,14 @@ For user instructions, see [USER_GUIDE.md](./USER_GUIDE.md).
 4. Initialize Database:
    Run the SQL script `database_schema.sql` in your Supabase project.
 
+## Security & Privacy
+
+### Data Security
+- **Row Level Security (RLS)**: All database tables are protected by RLS policies. This means each user can *only* access data that they created. Even if someone obtains your anon key, they cannot query another teacher's data.
+- **Authentication**: Powered by Supabase Auth (JWT).
+
+### AI & API Keys
+- **Gemini API Key**: This application runs entirely on the client side. Your `VITE_GEMINI_API_KEY` is bundled with the application.
+  - **Recommendation**: If deploying publicly (e.g., Vercel), restricts your API key in the [Google AI Studio](https://aistudio.google.com/) console to only accept requests from your deployed domain.
+
 View your app in AI Studio: https://ai.studio/apps/drive/19pwL9qgUf9-1-PwC9HRVsEP8tJqPfelD

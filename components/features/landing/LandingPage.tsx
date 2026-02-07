@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     CheckCircle,
     ArrowRight,
@@ -18,12 +18,259 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../../context/ThemeContext';
+import { Modal } from '../../ui/Modal';
+
+// Hook for scroll detection
+function useOnScreen(ref: React.RefObject<HTMLElement>) {
+    const [isIntersecting, setIntersecting] = useState(false);
+    useEffect(() => {
+        const observer = new IntersectionObserver(([entry]) => {
+            if (entry.isIntersecting) {
+                setIntersecting(true);
+                observer.disconnect();
+            }
+        }, { threshold: 0.1 });
+        if (ref.current) observer.observe(ref.current);
+        return () => observer.disconnect();
+    }, [ref]);
+    return isIntersecting;
+}
+
+// Mockup Component: Live Gradebook
+const LiveGradebook = () => {
+    const [visibleRows, setVisibleRows] = useState(0);
+    const [activeScore, setActiveScore] = useState(0);
+    const ref = useRef<HTMLDivElement>(null);
+    const isVisible = useOnScreen(ref);
+
+    useEffect(() => {
+        if (!isVisible) return;
+
+        let rowCount = 0;
+        const interval = setInterval(() => {
+            rowCount++;
+            setVisibleRows(prev => (prev < 4 ? prev + 1 : prev));
+            if (rowCount >= 4) clearInterval(interval);
+        }, 500);
+
+        let score = 0;
+        const scoreInterval = setInterval(() => {
+            score += 2;
+            setActiveScore(prev => (prev < 92 ? prev + 2 : 92));
+            if (score >= 92) clearInterval(scoreInterval);
+        }, 30);
+
+        return () => {
+            clearInterval(interval);
+            clearInterval(scoreInterval);
+        };
+    }, [isVisible]);
+
+    return (
+        <div ref={ref} className="w-full h-full bg-white dark:bg-slate-950 rounded-xl shadow-lg border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col opacity-90 hover:scale-105 transition-transform duration-500">
+            {/* Header */}
+            <div className="h-10 border-b border-slate-100 dark:border-slate-800 flex items-center px-4 gap-4 bg-slate-50/50 dark:bg-slate-900/50">
+                <div className="w-20 h-2 rounded-full bg-slate-200 dark:bg-slate-700" />
+                <div className="flex-1" />
+                <div className="w-4 h-4 rounded bg-blue-100 dark:bg-blue-900/50 text-blue-600 flex items-center justify-center text-[8px] font-bold">%</div>
+            </div>
+            {/* Rows */}
+            <div className="p-2 space-y-1">
+                {[
+                    { name: 'Alex M.', score: `${activeScore}%`, grade: 'A*', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
+                    { name: 'Sarah J.', score: '88%', grade: 'A', color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-500' },
+                    { name: 'James L.', score: '74%', grade: 'B', color: 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-500' },
+                    { name: 'Maya P.', score: '58%', grade: 'C', color: 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400' },
+                ].map((student, i) => (
+                    <div
+                        key={i}
+                        className={`flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-900 transition-all duration-500 ${i < visibleRows ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}
+                    >
+                        <div className="flex items-center gap-2">
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[8px] font-bold ${i % 2 === 0 ? 'bg-indigo-100 text-indigo-600' : 'bg-violet-100 text-violet-600'}`}>
+                                {student.name[0]}
+                            </div>
+                            <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{student.name}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-slate-600 dark:text-slate-400">{student.score}</span>
+                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${student.color}`}>
+                                {student.grade}
+                            </span>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+// Mockup Component: Live Syllabus
+const LiveSyllabus = () => {
+    const [checkedItems, setCheckedItems] = useState([false, false, false]);
+    const [progress, setProgress] = useState(0);
+    const ref = useRef<HTMLDivElement>(null);
+    const isVisible = useOnScreen(ref);
+
+    useEffect(() => {
+        if (!isVisible) return;
+
+        const timers = [
+            setTimeout(() => setCheckedItems([true, false, false]), 800),
+            setTimeout(() => setCheckedItems([true, true, false]), 1600),
+            setTimeout(() => setProgress(85), 500),
+        ];
+        return () => timers.forEach(clearTimeout);
+    }, [isVisible]);
+
+    return (
+        <div ref={ref} className="w-full h-full bg-white dark:bg-slate-950 rounded-xl shadow-lg border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col opacity-90 hover:scale-105 transition-transform duration-500 relative">
+            <div className="absolute top-0 left-0 w-1 h-full bg-slate-100 dark:bg-slate-800">
+                <div
+                    className="w-full bg-emerald-500 transition-all duration-[2000ms] ease-out"
+                    style={{ height: `${progress}%` }}
+                />
+            </div>
+            <div className="p-4 space-y-3">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Unit 3: Algorithms</div>
+                    <div className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">
+                        {progress}% Done
+                    </div>
+                </div>
+                {[
+                    { title: '3.1 Decomposition', status: 'Mastered', date: 'Oct 12' },
+                    { title: '3.2 Pattern Rec.', status: 'Mastered', date: 'Oct 14' },
+                    { title: '3.3 Abstraction', status: 'In Progress', date: 'Today' },
+                ].map((topic, i) => (
+                    <div key={i} className="flex items-start gap-3 group">
+                        <div className={`mt-0.5 w-4 h-4 rounded-full border flex items-center justify-center transition-all duration-500 ${checkedItems[i] ? 'bg-emerald-500 border-emerald-500 text-white scale-100' : 'border-slate-300 dark:border-slate-600'}`}>
+                            {checkedItems[i] && <CheckCircle size={10} />}
+                        </div>
+                        <div className="flex-1">
+                            <div className={`text-sm font-medium transition-all duration-500 ${checkedItems[i] ? 'text-slate-500 dark:text-slate-500 line-through decoration-slate-400' : 'text-slate-800 dark:text-white'}`}>
+                                {topic.title}
+                            </div>
+                            <div className="text-[10px] text-slate-400 mt-0.5 flex gap-2">
+                                <span>{topic.status}</span>
+                                <span>•</span>
+                                <span>{topic.date}</span>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+                {/* Heatmap strip at bottom */}
+                <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex gap-0.5">
+                    {[...Array(20)].map((_, i) => (
+                        <div
+                            key={i}
+                            className={`h-1.5 flex-1 rounded-full transition-all duration-500 delay-[${i * 50}ms] ${i < (progress / 5) ? (i % 3 === 0 ? 'bg-emerald-400' : 'bg-emerald-300') : 'bg-slate-100 dark:bg-slate-800'}`}
+                        />
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Mockup Component: Live Feedback Typewriter
+const LiveFeedback = () => {
+    const fullText = "Alex has demonstrated excellent mastery of Algorithms this term, achieving an average of 92%.";
+    const [text, setText] = useState("");
+    const ref = useRef<HTMLDivElement>(null);
+    const isVisible = useOnScreen(ref);
+
+    useEffect(() => {
+        if (!isVisible) return;
+
+        let i = 0;
+        const interval = setInterval(() => {
+            setText(fullText.substring(0, i));
+            i++;
+            if (i > fullText.length) clearInterval(interval);
+        }, 30);
+        return () => clearInterval(interval);
+    }, [isVisible]);
+
+    return (
+        <div ref={ref} className="w-full h-full bg-white dark:bg-slate-950 rounded-xl shadow-lg border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col opacity-90 hover:scale-105 transition-transform duration-500 relative">
+            <div className="absolute top-0 w-full h-1 bg-gradient-to-r from-pink-500 to-indigo-500 animate-pulse" />
+            <div className="p-4 space-y-4">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-lg">🎓</div>
+                    <div>
+                        <div className="text-sm font-bold text-slate-800 dark:text-white">Student Report</div>
+                        <div className="text-xs text-slate-400">Generated Just Now</div>
+                    </div>
+                </div>
+                <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-xl text-xs leading-relaxed text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-slate-800 relative min-h-[80px]">
+                    <Sparkles className="absolute -top-2 -right-2 text-pink-500 bg-white dark:bg-slate-800 rounded-full p-0.5" size={16} />
+                    <span className="font-bold text-indigo-600 dark:text-indigo-400">
+                        {text}
+                    </span>
+                    <span className="inline-block w-1.5 h-3 bg-indigo-500 ml-0.5 animate-pulse" />
+                </div>
+                <div className="flex gap-2">
+                    {['Focus', 'Helpful', 'Creative'].map((tag, i) => (
+                        <span key={i} className="px-2 py-1 rounded text-[10px] uppercase font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 animate-fade-in" style={{ animationDelay: `${i * 200}ms` }}>
+                            {tag}
+                        </span>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Demo Carousel Component
+const DemoCarousel = () => {
+    const [step, setStep] = useState(0);
+    const steps = [
+        { title: 'Smart Gradebook', component: <LiveGradebook />, desc: 'Track performance with weighted categories and instant alerts.' },
+        { title: 'Syllabus Hub', component: <LiveSyllabus />, desc: 'Visualize mastery and spot gaps in seconds.' },
+        { title: 'AI Feedback', component: <LiveFeedback />, desc: 'Generate personalized narrative reports with one click.' },
+    ];
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setStep(prev => (prev + 1) % steps.length);
+        }, 5000); // Auto-advance every 5s
+        return () => clearInterval(timer);
+    }, []);
+
+    return (
+        <div className="flex flex-col h-full">
+            <div className="flex-1 overflow-hidden relative rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 flex items-center justify-center p-8">
+                {/* Current Slide */}
+                <div key={step} className="w-full max-w-sm animate-fade-in">
+                    {steps[step].component}
+                </div>
+
+                {/* Navigation Dots */}
+                <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
+                    {steps.map((_, i) => (
+                        <button
+                            key={i}
+                            onClick={() => setStep(i)}
+                            className={`w-2 h-2 rounded-full transition-all ${i === step ? 'bg-indigo-600 w-6' : 'bg-slate-300 dark:bg-slate-600'}`}
+                        />
+                    ))}
+                </div>
+            </div>
+            <div className="mt-6 text-center">
+                <h3 className="text-xl font-bold mb-2">{steps[step].title}</h3>
+                <p className="text-slate-500">{steps[step].desc}</p>
+            </div>
+        </div>
+    );
+};
 
 const LandingPage: React.FC = () => {
     const navigate = useNavigate();
     const { theme, toggleTheme } = useTheme();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isDemoOpen, setIsDemoOpen] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -49,6 +296,10 @@ const LandingPage: React.FC = () => {
 
     return (
         <div className={`min-h-screen font-sans transition-colors duration-300 ${theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+            <Modal isOpen={isDemoOpen} onClose={() => setIsDemoOpen(false)} title="Product Tour" size="lg">
+                <DemoCarousel />
+            </Modal>
+
             {/* Navigation */}
             <nav className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-sm py-4' : 'bg-transparent py-6'}`}>
                 <div className="container mx-auto px-4 md:px-8 flex items-center justify-between">
@@ -142,12 +393,12 @@ const LandingPage: React.FC = () => {
                     </div>
 
                     <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6 tracking-tight animate-slide-up">
-                        Your AI-Powered<br />
-                        <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">Teacher Command Center.</span>
+                        Focus on Teaching,<br />
+                        <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">Not Admin.</span>
                     </h1>
 
                     <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed animate-slide-up delay-100">
-                        Handle complex grade curving, AI-powered reports, and student interventions in one place. Built specifically for IGCSE, A-Level, and IB teachers.
+                        The all-in-one command center for IGCSE & IB teachers. Track syllabus mastery, automate reports with AI, and curve grades in seconds.
                     </p>
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up delay-200">
@@ -157,7 +408,10 @@ const LandingPage: React.FC = () => {
                         >
                             Get Started for Free
                         </button>
-                        <button className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-lg transition-all flex items-center justify-center gap-2">
+                        <button
+                            onClick={() => setIsDemoOpen(true)}
+                            className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-lg transition-all flex items-center justify-center gap-2"
+                        >
                             <span className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">▶</span>
                             Watch Demo
                         </button>
@@ -169,17 +423,17 @@ const LandingPage: React.FC = () => {
             <section id="features" className="py-20 md:py-32 bg-white dark:bg-slate-900 relative">
                 <div className="container mx-auto px-4">
                     <div className="text-center mb-16">
-                        <h2 className="text-3xl md:text-4xl font-bold mb-4">Focus on Teaching, Not Admin</h2>
+                        <h2 className="text-3xl md:text-4xl font-bold mb-4">Complete Classroom Control</h2>
                         <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">
-                            Automate the redundant tasks that eat up your planning time.
+                            Powerful tools designed to save you hours every week.
                         </p>
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-8">
                         <FeatureCard
                             icon={<TrendingUp className="text-emerald-500" size={32} />}
-                            title="Automated Curving"
-                            description="Normalise raw scores to IGCSE & IB boundaries in seconds. No more manual math or Excel formulas."
+                            title="Syllabus Tracking"
+                            description="Track coverage against exam boards (IGCSE, IB, A-Level). Spot gaps instantly with mastery heatmaps."
                         />
                         <FeatureCard
                             icon={<Sparkles className="text-violet-500" size={32} />}
@@ -188,8 +442,8 @@ const LandingPage: React.FC = () => {
                         />
                         <FeatureCard
                             icon={<ListChecks className="text-amber-500" size={32} />}
-                            title="Syllabus & Mastery"
-                            description="Track coverage against exam boards. spot gaps instantly with mastery heatmaps and never miss a topic."
+                            title="Automated Grading"
+                            description="Calculate weighted averages instantly. Support for complex grade curving and boundary management."
                         />
                     </div>
                 </div>
@@ -199,7 +453,7 @@ const LandingPage: React.FC = () => {
             <section id="workflow" className="py-20 md:py-32 overflow-hidden">
                 <div className="container mx-auto px-4 space-y-24">
 
-                    {/* Item 1 */}
+                    {/* Item 1: Gradebook */}
                     <div className="flex flex-col md:flex-row items-center gap-12 md:gap-24">
                         <div className="flex-1 space-y-6">
                             <div className="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
@@ -207,77 +461,28 @@ const LandingPage: React.FC = () => {
                             </div>
                             <h3 className="text-3xl font-bold">A Gradebook That Thinks</h3>
                             <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed">
-                                Visualise student performance with instant color-coded alerts. Track averages, weightings, and export everything to CSV for your school's MIS.
+                                Visualise student performance with instant color-coded alerts. Track averages with weighted categories (e.g., Exams 60%, Homework 20%) and export everything to CSV.
                             </p>
                             <ul className="space-y-3">
-                                <ListItem text="Custom Weighting Categories" />
+                                <ListItem text="Weighted Grading Categories" />
                                 <ListItem text="Instant Excel Export" />
                                 <ListItem text="Visual Performance Alerts" />
                             </ul>
                         </div>
                         <div className="flex-1 bg-gradient-to-tr from-slate-200 to-slate-100 dark:from-slate-800 dark:to-slate-900 rounded-3xl p-8 aspect-[4/3] flex items-center justify-center shadow-2xl">
-                            {/* Abstract Representation of UI */}
-                            <div className="w-full h-full bg-white dark:bg-slate-950 rounded-xl shadow-lg p-6 border border-slate-200 dark:border-slate-800 opacity-90 hover:scale-105 transition-transform duration-500">
-                                <div className="flex items-center justify-between mb-8">
-                                    <div className="h-4 w-1/3 bg-slate-100 dark:bg-slate-800 rounded-full" />
-                                    <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30" />
-                                </div>
-                                <div className="space-y-4">
-                                    <div className="h-12 w-full bg-slate-50 dark:bg-slate-900 rounded-lg flex items-center px-4 border-l-4 border-emerald-500">
-                                        <div className="h-3 w-1/4 bg-slate-200 dark:bg-slate-700 rounded-full" />
-                                    </div>
-                                    <div className="h-12 w-full bg-slate-50 dark:bg-slate-900 rounded-lg flex items-center px-4 border-l-4 border-amber-500">
-                                        <div className="h-3 w-1/4 bg-slate-200 dark:bg-slate-700 rounded-full" />
-                                    </div>
-                                    <div className="h-12 w-full bg-slate-50 dark:bg-slate-900 rounded-lg flex items-center px-4 border-l-4 border-red-500">
-                                        <div className="h-3 w-1/4 bg-slate-200 dark:bg-slate-700 rounded-full" />
-                                    </div>
-                                </div>
-                            </div>
+                            <LiveGradebook />
                         </div>
                     </div>
 
-                    {/* Item 2 */}
+                    {/* Item 2: Syllabus Hub */}
                     <div className="flex flex-col md:flex-row-reverse items-center gap-12 md:gap-24">
-                        <div className="flex-1 space-y-6">
-                            <div className="w-12 h-12 rounded-2xl bg-pink-100 dark:bg-pink-900/30 flex items-center justify-center text-pink-600 dark:text-pink-400">
-                                <BookOpen size={24} />
-                            </div>
-                            <h3 className="text-3xl font-bold">Lesson Planning on Autopilot</h3>
-                            <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed">
-                                Generate structured lesson plans from a single topic using our AI engine. Attach resources, links, and homework in one drag-and-drop interface.
-                            </p>
-                            <ul className="space-y-3">
-                                <ListItem text="AI-Generated Objectives" />
-                                <ListItem text="Resource Management" />
-                                <ListItem text="Syllabus Tracking" />
-                            </ul>
-                        </div>
-                        <div className="flex-1 bg-gradient-to-bl from-pink-100 to-indigo-50 dark:from-slate-800 dark:to-slate-900 rounded-3xl p-8 aspect-[4/3] flex items-center justify-center shadow-2xl">
-                            <div className="w-full h-full bg-white dark:bg-slate-950 rounded-xl shadow-lg p-6 border border-slate-200 dark:border-slate-800 opacity-90 hover:scale-105 transition-transform duration-500 flex flex-col">
-                                <div className="h-4 w-1/2 bg-slate-100 dark:bg-slate-800 rounded-full mb-6" />
-                                <div className="flex-1 space-y-3">
-                                    <div className="h-3 w-full bg-slate-50 dark:bg-slate-900 rounded-full" />
-                                    <div className="h-3 w-[90%] bg-slate-50 dark:bg-slate-900 rounded-full" />
-                                    <div className="h-3 w-[95%] bg-slate-50 dark:bg-slate-900 rounded-full" />
-                                    <div className="mt-4 flex gap-2">
-                                        <div className="h-16 w-16 bg-slate-100 dark:bg-slate-800 rounded-lg" />
-                                        <div className="h-16 w-16 bg-slate-100 dark:bg-slate-800 rounded-lg" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Item 3 */}
-                    <div className="flex flex-col md:flex-row items-center gap-12 md:gap-24">
                         <div className="flex-1 space-y-6">
                             <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                                 <ListChecks size={24} />
                             </div>
                             <h3 className="text-3xl font-bold">Total Syllabus Control</h3>
                             <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed">
-                                Ditch the paper checklist. Track every topic from "Not Started" to "Mastered". Link lessons directly to syllabus points and visualize your progress.
+                                Ditch the paper checklist. Build recursive topics (Chapters → Subtopics), track mastery per class, and spot coverage gaps instantly.
                             </p>
                             <ul className="space-y-3">
                                 <ListItem text="Exam Board Templates" />
@@ -286,20 +491,70 @@ const LandingPage: React.FC = () => {
                             </ul>
                         </div>
                         <div className="flex-1 bg-gradient-to-br from-emerald-100 to-teal-50 dark:from-slate-800 dark:to-slate-900 rounded-3xl p-8 aspect-[4/3] flex items-center justify-center shadow-2xl">
-                            <div className="w-full h-full bg-white dark:bg-slate-950 rounded-xl shadow-lg p-6 border border-slate-200 dark:border-slate-800 opacity-90 hover:scale-105 transition-transform duration-500 flex flex-col gap-3">
-                                <div className="h-4 w-1/3 bg-slate-100 dark:bg-slate-800 rounded-full mb-2" />
-                                <div className="space-y-2">
-                                    {[1, 2, 3, 4].map(i => (
-                                        <div key={i} className="flex items-center gap-3 p-2 border border-slate-50 dark:border-slate-800 rounded-lg">
-                                            <div className={`w-3 h-3 rounded-full ${i === 1 ? 'bg-emerald-500' : i === 2 ? 'bg-blue-500' : 'bg-slate-200 dark:bg-slate-700'}`} />
-                                            <div className="h-2 w-2/3 bg-slate-100 dark:bg-slate-800 rounded-full" />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+                            <LiveSyllabus />
                         </div>
                     </div>
 
+                    {/* Item 3: Smart Feedback */}
+                    <div className="flex flex-col md:flex-row items-center gap-12 md:gap-24">
+                        <div className="flex-1 space-y-6">
+                            <div className="w-12 h-12 rounded-2xl bg-pink-100 dark:bg-pink-900/30 flex items-center justify-center text-pink-600 dark:text-pink-400">
+                                <Sparkles size={24} />
+                            </div>
+                            <h3 className="text-3xl font-bold">Feedback in Seconds</h3>
+                            <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed">
+                                Generate personalized narrative reports. Our AI combines grade data, attendance trends, and your selected behavioral traits into a professional comment.
+                            </p>
+                            <ul className="space-y-3">
+                                <ListItem text="Behavioral Trait Selection" />
+                                <ListItem text="Context-Aware Generation" />
+                                <ListItem text="Assignment-Specific Feedback" />
+                            </ul>
+                        </div>
+                        <div className="flex-1 bg-gradient-to-bl from-pink-100 to-indigo-50 dark:from-slate-800 dark:to-slate-900 rounded-3xl p-8 aspect-[4/3] flex items-center justify-center shadow-2xl">
+                            <LiveFeedback />
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            {/* How It Works */}
+            <section className="py-20 bg-slate-50 dark:bg-slate-950/50">
+                <div className="container mx-auto px-4">
+                    <div className="text-center mb-16">
+                        <h2 className="text-3xl md:text-4xl font-bold mb-4">Get Started in Minutes</h2>
+                        <p className="text-slate-500 dark:text-slate-400">No complex setup. Just intuitive tools.</p>
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-12 relative">
+                        {/* Connecting Line (Desktop) */}
+                        <div className="hidden md:block absolute top-12 left-[16%] right-[16%] h-0.5 bg-gradient-to-r from-slate-200 via-indigo-200 to-slate-200 dark:from-slate-800 dark:via-indigo-900 dark:to-slate-800 z-0" />
+
+                        <div className="relative z-10 flex flex-col items-center text-center">
+                            <div className="w-24 h-24 bg-white dark:bg-slate-900 rounded-full border-4 border-slate-50 dark:border-slate-800 flex items-center justify-center text-2xl font-bold bg-gradient-to-br from-indigo-500 to-violet-500 bg-clip-text text-transparent shadow-xl mb-6">
+                                1
+                            </div>
+                            <h3 className="text-xl font-bold mb-3">Define Curriculum</h3>
+                            <p className="text-slate-500 dark:text-slate-400">Select a template (IGCSE, IB) or build your own custom syllabus structure.</p>
+                        </div>
+
+                        <div className="relative z-10 flex flex-col items-center text-center">
+                            <div className="w-24 h-24 bg-white dark:bg-slate-900 rounded-full border-4 border-slate-50 dark:border-slate-800 flex items-center justify-center text-2xl font-bold bg-gradient-to-br from-indigo-500 to-violet-500 bg-clip-text text-transparent shadow-xl mb-6">
+                                2
+                            </div>
+                            <h3 className="text-xl font-bold mb-3">Track & Grade</h3>
+                            <p className="text-slate-500 dark:text-slate-400">Input grades, mark attendance, and track syllabus coverage in the planner.</p>
+                        </div>
+
+                        <div className="relative z-10 flex flex-col items-center text-center">
+                            <div className="w-24 h-24 bg-white dark:bg-slate-900 rounded-full border-4 border-slate-50 dark:border-slate-800 flex items-center justify-center text-2xl font-bold bg-gradient-to-br from-indigo-500 to-violet-500 bg-clip-text text-transparent shadow-xl mb-6">
+                                3
+                            </div>
+                            <h3 className="text-xl font-bold mb-3">Generate Reports</h3>
+                            <p className="text-slate-500 dark:text-slate-400">Let AI write your narrative reports and export your gradebook to Excel.</p>
+                        </div>
+                    </div>
                 </div>
             </section>
 
