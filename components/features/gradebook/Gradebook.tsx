@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useAppContext } from '../context/AppContext';
-import { Plus, X, User, Edit2, Trash2, CheckCircle, Download, Settings } from 'lucide-react';
-import PerformanceChart from './PerformanceChart';
-import StudentProfileModal from './StudentProfileModal';
-import { Student, Assignment } from '../types';
+import { useAppContext } from '../../../context/AppContext';
+import { Plus, X, User, Edit2, Trash2, CheckCircle, Download, Settings, Save } from 'lucide-react';
+import PerformanceChart from '../dashboard/PerformanceChart';
+import StudentProfileModal from '../students/StudentProfileModal';
+import { Student, Assignment } from '../../../types';
+import { Button } from '../../ui/Button';
+import { Input } from '../../ui/Input';
+import { Select } from '../../ui/Select';
+import { Modal } from '../../ui/Modal';
+import { Card, CardHeader, CardTitle, CardContent } from '../../ui/Card';
 
 
 // Optimized Cell Component to prevent re-renders on every keystroke
@@ -311,151 +316,138 @@ const Gradebook: React.FC = () => {
         </div>
 
         <div className="flex gap-3 flex-wrap items-center">
-          <div className="relative group">
-            <select
+          <div className="min-w-[200px]">
+            <Select
               value={selectedClassId}
               onChange={(e) => setSelectedClassId(e.target.value)}
-              className="appearance-none bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-white text-sm font-medium rounded-xl px-5 py-2.5 pr-10 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm hover:border-blue-400 dark:hover:border-blue-500 cursor-pointer min-w-[200px]"
-            >
-              {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 transition-transform group-hover:translate-y-0.5">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
-            </div>
+              options={classes.map(c => ({ label: c.name, value: c.id }))}
+            />
           </div>
 
-          <button
+          <Button
             onClick={handleExportCSV}
-            className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-sm hover:shadow-md"
-            title="Export as CSV"
+            variant="secondary"
+            icon={<Download size={18} />}
           >
-            <Download size={18} className="text-slate-400 dark:text-slate-400" /> Export CSV
-          </button>
+            Export CSV
+          </Button>
 
-          <button
+          <Button
             onClick={handlePurge}
-            className="bg-white dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/10 text-slate-600 dark:text-slate-200 hover:text-red-600 dark:hover:text-red-400 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-sm hover:shadow-md"
-            title="Remove all 0 grades"
+            variant="secondary"
+            className="hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10"
+            icon={<Trash2 size={18} />}
           >
-            <Trash2 size={18} className="text-slate-400 dark:text-slate-400 group-hover:text-red-500" />
             <span className="hidden sm:inline">Clean Data</span>
-          </button>
+          </Button>
 
-          <button
+          <Button
             onClick={() => setShowWeightConfig(true)}
-            className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-sm hover:shadow-md"
-            title="Configure Grade Weights"
+            variant="secondary"
+            icon={<Settings size={18} />}
           >
-            <Settings size={18} className="text-slate-400 dark:text-slate-400" /> Weights
-          </button>
+            Weights
+          </Button>
 
-          <button
+          <Button
             onClick={() => setShowAddAssign(!showAddAssign)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-600/20 hover:shadow-blue-600/40 hover:-translate-y-0.5 active:translate-y-0"
+            icon={<Plus size={18} />}
+            className="shadow-lg shadow-blue-600/20"
           >
-            <Plus size={18} /> New Assignment
-          </button>
+            New Assignment
+          </Button>
         </div>
       </header>
 
       {/* Grade Weights Modal */}
-      {showWeightConfig && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl w-full max-w-sm shadow-2xl p-6 animate-slide-up">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-purple-600 dark:text-purple-400">
-                  <Settings size={20} />
+      <Modal
+        isOpen={showWeightConfig}
+        onClose={() => setShowWeightConfig(false)}
+        title="Grade Weights"
+        size="sm"
+      >
+        <div className="p-6">
+          <div className="space-y-4 mb-6">
+            {Object.entries(classWeights).map(([cat, weight]) => (
+              <div key={cat} className="flex items-end gap-3">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{cat}</label>
                 </div>
-                Grade Weights
-              </h3>
-              <button onClick={() => setShowWeightConfig(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><X size={20} /></button>
-            </div>
-
-            <div className="space-y-4 mb-6">
-              {Object.entries(classWeights).map(([cat, weight]) => (
-                <div key={cat} className="flex items-center gap-3">
-                  <label className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-300">{cat}</label>
-                  <div className="relative w-24">
-                    <input
-                      type="number"
-                      value={weight}
-                      onChange={(e) => setClassWeights({ ...classWeights, [cat]: parseFloat(e.target.value) || 0 })}
-                      className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-right text-sm font-bold text-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-purple-500/50"
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">%</span>
-                  </div>
+                <div className="w-24 relative">
+                  <Input
+                    type="number"
+                    value={weight}
+                    onChange={(e) => setClassWeights({ ...classWeights, [cat]: parseFloat(e.target.value) || 0 })}
+                    endIcon={<span className="text-xs text-slate-400">%</span>}
+                  />
                 </div>
-              ))}
-              <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-700">
-                <span className="text-xs font-bold uppercase text-slate-500">Total</span>
-                <span className={`text-sm font-bold ${(Object.values(classWeights) as number[]).reduce((a, b) => a + b, 0) === 100 ? 'text-emerald-500' : 'text-amber-500'}`}>
-                  {(Object.values(classWeights) as number[]).reduce((a, b) => a + b, 0)}%
-                </span>
               </div>
+            ))}
+            <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-700">
+              <span className="text-xs font-bold uppercase text-slate-500">Total</span>
+              <span className={`text-sm font-bold ${(Object.values(classWeights) as number[]).reduce((a, b) => a + b, 0) === 100 ? 'text-emerald-500' : 'text-amber-500'}`}>
+                {(Object.values(classWeights) as number[]).reduce((a, b) => a + b, 0)}%
+              </span>
             </div>
-
-            <button onClick={saveWeights} className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-purple-600/20 transition-all">
-              Save Configuration
-            </button>
           </div>
+
+          <Button onClick={saveWeights} className="w-full">
+            Save Configuration
+          </Button>
         </div>
-      )}
+      </Modal>
 
       {/* Add Assignment Form */}
       {showAddAssign && (
-        <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-6 shadow-xl shadow-slate-200/50 dark:shadow-none animate-slide-up relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-1 h-full bg-blue-500/50"></div>
-          <h4 className="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
-            <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
-              <Plus size={16} />
-            </div>
-            Create New Assignment
-          </h4>
-          <form onSubmit={handleAddAssignment} className="flex gap-4 items-end flex-wrap">
-            <div className="flex-1 min-w-[200px]">
-              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Title</label>
-              <input
-                value={newAssignTitle}
-                onChange={e => setNewAssignTitle(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all placeholder-slate-400"
-                placeholder="e.g. Unit 3 Quiz"
-                autoFocus
-              />
-            </div>
-            <div className="w-40">
-              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Max Points</label>
-              <input
-                type="number"
-                value={newAssignPoints}
-                onChange={e => setNewAssignPoints(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all placeholder-slate-400"
-              />
-            </div>
-            <div className="w-40">
-              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Category</label>
-              <select
-                value={newAssignCategory}
-                onChange={e => setNewAssignCategory(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all cursor-pointer appearance-none"
-              >
-                {Object.keys(classWeights).map(cat => <option key={cat} value={cat}>{cat}</option>)}
-              </select>
-            </div>
-            <div className="w-48">
-              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Date</label>
-              <input
-                type="date"
-                value={newAssignDate}
-                onChange={e => setNewAssignDate(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all"
-              />
-            </div>
-            <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl text-sm font-bold shadow-lg shadow-blue-600/20 hover:shadow-blue-600/40 transition-all hover:scale-[1.02] active:scale-[0.98]">
-              Create Assignment
-            </button>
-          </form>
-        </div>
+        <Card className="animate-slide-up relative overflow-hidden">
+          <CardContent className="p-6">
+            <div className="absolute top-0 left-0 w-1 h-full bg-blue-500/50"></div>
+            <h4 className="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+              <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
+                <Plus size={16} />
+              </div>
+              Create New Assignment
+            </h4>
+            <form onSubmit={handleAddAssignment} className="flex gap-4 items-end flex-wrap">
+              <div className="flex-1 min-w-[200px]">
+                <Input
+                  label="Title"
+                  value={newAssignTitle}
+                  onChange={e => setNewAssignTitle(e.target.value)}
+                  placeholder="e.g. Unit 3 Quiz"
+                  autoFocus
+                />
+              </div>
+              <div className="w-40">
+                <Input
+                  label="Max Points"
+                  type="number"
+                  value={newAssignPoints}
+                  onChange={e => setNewAssignPoints(e.target.value)}
+                />
+              </div>
+              <div className="w-40">
+                <Select
+                  label="Category"
+                  value={newAssignCategory}
+                  onChange={e => setNewAssignCategory(e.target.value)}
+                  options={Object.keys(classWeights).map(cat => ({ label: cat, value: cat }))}
+                />
+              </div>
+              <div className="w-48">
+                <Input
+                  label="Date"
+                  type="date"
+                  value={newAssignDate}
+                  onChange={e => setNewAssignDate(e.target.value)}
+                />
+              </div>
+              <Button type="submit">
+                Create Assignment
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       )}
 
       {/* Grade Table */}
@@ -552,31 +544,20 @@ const Gradebook: React.FC = () => {
       </div>
 
       {/* Edit Assignment Modal */}
-      {editingAssignment && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl w-full max-w-md shadow-2xl p-8 animate-slide-up">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
-                  <Edit2 size={20} />
-                </div>
-                Edit Assignment
-              </h3>
-              <button
-                onClick={() => setEditingAssignment(null)}
-                className="p-2 bg-slate-100 dark:bg-slate-700/50 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
+      <Modal
+        isOpen={!!editingAssignment}
+        onClose={() => setEditingAssignment(null)}
+        title="Edit Assignment"
+        size="md"
+      >
+        {editingAssignment && (
+          <div className="p-6">
             <form onSubmit={handleUpdateAssignment} className="space-y-6">
               <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Title</label>
-                <input
+                <Input
+                  label="Title"
                   value={editAssignTitle}
                   onChange={e => setEditAssignTitle(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all placeholder-slate-400"
                 />
               </div>
               {editingAssignment.createdAt && (
@@ -586,34 +567,33 @@ const Gradebook: React.FC = () => {
               )}
               <div className="grid grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Max Points</label>
-                  <input
+                  <Input
+                    label="Max Points"
                     type="number"
                     value={editAssignPoints}
                     onChange={e => setEditAssignPoints(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all placeholder-slate-400"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Category</label>
-                    <select
-                      value={editAssignCategory}
-                      onChange={e => setEditAssignCategory(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all cursor-pointer appearance-none"
-                    >
-                      {Object.keys(classWeights).map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                    </select>
+                  <div className="col-span-2">
+                    {/* Nested grid fix - logic seemed bit off in original but preserving structure */}
                   </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Date</label>
-                    <input
-                      type="date"
-                      value={editAssignDate}
-                      onChange={e => setEditAssignDate(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all"
-                    />
-                  </div>
+                </div>
+                <div>
+                  <Select
+                    label="Category"
+                    value={editAssignCategory}
+                    onChange={e => setEditAssignCategory(e.target.value)}
+                    options={Object.keys(classWeights).map(cat => ({ label: cat, value: cat }))}
+                  />
+                </div>
+                <div>
+                  <Input
+                    label="Date"
+                    type="date"
+                    value={editAssignDate}
+                    onChange={e => setEditAssignDate(e.target.value)}
+                  />
                 </div>
               </div>
               <div>
@@ -629,24 +609,24 @@ const Gradebook: React.FC = () => {
               </div>
 
               <div className="flex gap-4 pt-4 border-t border-slate-100 dark:border-slate-700">
-                <button
+                <Button
                   type="button"
                   onClick={handleDeleteAssignment}
-                  className="px-4 py-3 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/30 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all"
+                  variant="danger"
                 >
-                  <Trash2 size={18} /> Delete
-                </button>
-                <button
+                  <Trash2 size={18} className="mr-2" /> Delete
+                </Button>
+                <Button
                   type="submit"
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold shadow-lg shadow-blue-600/20 hover:shadow-blue-600/40 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  className="flex-1"
                 >
                   Save Changes
-                </button>
+                </Button>
               </div>
             </form>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
 
       {/* Student Detail Modal */}
       {selectedStudent && (

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../../../context/AppContext';
 import { Copy, Plus, Trash2, Code2 } from 'lucide-react';
 
 const SnippetBank: React.FC = () => {

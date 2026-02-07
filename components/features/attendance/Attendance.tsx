@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useAppContext } from '../context/AppContext';
-import { AttendanceStatus, Student } from '../types';
+import { useAppContext } from '../../../context/AppContext';
+import { AttendanceStatus, Student } from '../../../types';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
-import StudentProfileModal from './StudentProfileModal';
+import StudentProfileModal from '../students/StudentProfileModal';
 
 const Attendance: React.FC = () => {
   const { classes, students, attendance, updateAttendance, fetchClasses, fetchStudents, fetchAttendance } = useAppContext();

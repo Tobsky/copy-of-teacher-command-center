@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../../../context/AppContext';
 import { CheckSquare, Clock, GraduationCap, Plus, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PerformanceChart from './PerformanceChart';

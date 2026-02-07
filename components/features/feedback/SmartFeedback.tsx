@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useAppContext } from '../context/AppContext';
-import { generateStudentFeedback } from '../services/geminiService';
+import { useAppContext } from '../../../context/AppContext';
+import { generateStudentFeedback } from '../../../services/geminiService';
 import { Sparkles, Loader2, Copy, Printer } from 'lucide-react';
-import ReportCard from './ReportCard';
+import ReportCard from '../students/ReportCard';
 
 const SmartFeedback: React.FC = () => {
   const { classes, students, assignments, grades, attendance, fetchClasses, fetchStudents, fetchAssignments, fetchGrades, fetchAttendance } = useAppContext();

@@ -1,8 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../../../context/AppContext';
 import { ListChecks, Plus, X, Check, AlertTriangle, BookOpen, ChevronDown, Library, BarChart3, Edit3, Trash2, ArrowUp, ArrowDown, Printer } from 'lucide-react';
-import { SyllabusTopic, Curriculum, SyllabusProgress, SyllabusStatus } from '../types';
+import { SyllabusTopic, Curriculum, SyllabusProgress, SyllabusStatus } from '../../../types';
+import { Button } from '../../ui/Button';
+import { Input } from '../../ui/Input';
+import { Select } from '../../ui/Select';
+import { Modal } from '../../ui/Modal';
+import { Card, CardHeader, CardTitle, CardContent } from '../../ui/Card';
 
 type ViewMode = 'tracker' | 'library';
 
@@ -387,13 +392,12 @@ const SyllabusHub: React.FC = () => {
                 <div className="flex items-center gap-3">
                     {/* Print Scheme of Work Button */}
                     {viewMode === 'tracker' && (
-                        <button
+                        <Button
                             onClick={handlePrintSchemeOfWork}
-                            className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-2.5 rounded-xl text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all shadow-sm group"
+                            variant="secondary"
+                            icon={<Printer size={20} />}
                             title="Print Scheme of Work"
-                        >
-                            <Printer size={20} className="group-hover:scale-110 transition-transform" />
-                        </button>
+                        />
                     )}
 
                     {/* Glassmorphism Toggle */}
@@ -428,17 +432,12 @@ const SyllabusHub: React.FC = () => {
                         <div className="flex-1 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-6 shadow-sm">
                             <div className="flex flex-wrap gap-4 items-center">
                                 <div className="flex-1 min-w-[180px]">
-                                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Class</label>
-                                    <div className="relative">
-                                        <select
-                                            value={selectedClassId}
-                                            onChange={(e) => setSelectedClassId(e.target.value)}
-                                            className="w-full appearance-none bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-white text-sm font-medium rounded-xl px-4 py-3 pr-10 outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all cursor-pointer"
-                                        >
-                                            {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                        </select>
-                                        <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                    </div>
+                                    <Select
+                                        label="Class"
+                                        value={selectedClassId}
+                                        onChange={(e) => setSelectedClassId(e.target.value)}
+                                        options={classes.map(c => ({ label: c.name, value: c.id }))}
+                                    />
                                     {classCurriculum && (
                                         <div className="mt-4 p-3 bg-violet-50 dark:bg-violet-900/10 border border-violet-100 dark:border-violet-900/30 rounded-xl">
                                             <p className="text-xs font-bold text-violet-600 dark:text-violet-400 uppercase tracking-wide mb-1">Linked Curriculum</p>
@@ -457,16 +456,15 @@ const SyllabusHub: React.FC = () => {
                                     {!classCurriculum && selectedClassId && (
                                         <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 rounded-xl">
                                             <p className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-2">No Curriculum Linked</p>
-                                            <select
+                                            <Select
                                                 onChange={(e) => handleLinkCurriculum(e.target.value)}
-                                                className="w-full bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-800 text-slate-700 dark:text-white text-xs rounded-lg px-2 py-2 outline-none focus:ring-2 focus:ring-amber-500/20"
+                                                className="text-xs py-2"
                                                 defaultValue=""
-                                            >
-                                                <option value="" disabled>Select a Template...</option>
-                                                {curriculums.map(c => (
-                                                    <option key={c.id} value={c.id}>{c.name}</option>
-                                                ))}
-                                            </select>
+                                                options={[
+                                                    { label: 'Select a Template...', value: '', disabled: true },
+                                                    ...curriculums.map(c => ({ label: c.name, value: c.id }))
+                                                ]}
+                                            />
                                             {curriculums.length === 0 && (
                                                 <p className="text-xs text-slate-400 mt-2 italic">
                                                     No templates available. Create one in the Library view.
@@ -476,19 +474,16 @@ const SyllabusHub: React.FC = () => {
                                     )}
                                 </div>
                                 <div className="min-w-[160px]">
-                                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Semester</label>
-                                    <div className="relative">
-                                        <select
-                                            value={selectedSemester}
-                                            onChange={(e) => setSelectedSemester(e.target.value as any)}
-                                            className="w-full appearance-none bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-white text-sm font-medium rounded-xl px-4 py-3 pr-10 outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all cursor-pointer"
-                                        >
-                                            <option value="all">All Semesters</option>
-                                            <option value="Semester 1">Semester 1</option>
-                                            <option value="Semester 2">Semester 2</option>
-                                        </select>
-                                        <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                    </div>
+                                    <Select
+                                        label="Semester"
+                                        value={selectedSemester}
+                                        onChange={(e) => setSelectedSemester(e.target.value as any)}
+                                        options={[
+                                            { label: 'All Semesters', value: 'all' },
+                                            { label: 'Semester 1', value: 'Semester 1' },
+                                            { label: 'Semester 2', value: 'Semester 2' }
+                                        ]}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -528,11 +523,11 @@ const SyllabusHub: React.FC = () => {
                     )}
 
                     {/* Mastery Tracker List */}
-                    <div className="flex-1 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-6 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden flex flex-col min-h-[400px]">
-                        <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">
-                            Topics ({trackerCount})
-                        </h3>
-                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-2">
+                    <Card className="flex-1 flex flex-col min-h-[400px] overflow-hidden">
+                        <CardHeader>
+                            <CardTitle>Topics ({trackerCount})</CardTitle>
+                        </CardHeader>
+                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 px-6 pb-6">
                             {/* Group by Root/Chapter logic for Tracker */}
                             {(() => {
                                 if (trackerHierarchy.roots.length === 0 && filteredTrackerTopics.length === 0) {
@@ -645,7 +640,7 @@ const SyllabusHub: React.FC = () => {
                                 });
                             })()}
                         </div>
-                    </div>
+                    </Card>
                 </>
             )}
 
@@ -654,253 +649,252 @@ const SyllabusHub: React.FC = () => {
                 <>
                     <div className="flex flex-col lg:flex-row gap-6">
                         {/* Curriculum Selector */}
-                        <div className="w-full lg:w-1/3 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-6 shadow-sm">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-lg font-bold text-slate-800 dark:text-white">Templates</h3>
-                                <button
-                                    onClick={() => setShowAddCurriculumModal(true)}
-                                    className="p-2 bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 rounded-lg hover:bg-violet-200 dark:hover:bg-violet-900/50 transition-colors"
-                                >
-                                    <Plus size={16} />
-                                </button>
-                            </div>
-                            <div className="space-y-2">
-                                {curriculums.map(c => (
-                                    <div
-                                        key={c.id}
-                                        onClick={() => setSelectedCurriculumId(c.id)}
-                                        className={`p-3 rounded-xl cursor-pointer transition-all flex justify-between items-center group ${selectedCurriculumId === c.id
-                                            ? 'bg-violet-100 dark:bg-violet-900/30 border border-violet-300 dark:border-violet-700'
-                                            : 'bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
-                                            }`}
-                                    >
-                                        <div>
-                                            <p className="font-bold text-sm text-slate-800 dark:text-white">{c.name}</p>
-                                            {c.boardCode && <p className="text-xs text-slate-400">{c.boardCode}</p>}
-                                        </div>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); handleDeleteCurriculum(c.id); }}
-                                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                        <Card className="w-full lg:w-1/3">
+                            <CardContent>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-lg font-bold text-slate-800 dark:text-white">Templates</h3>
+                                    <Button
+                                        onClick={() => setShowAddCurriculumModal(true)}
+                                        size="sm"
+                                        variant="secondary"
+                                        className="text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-900/30 hover:bg-violet-200 dark:hover:bg-violet-900/50 border-none"
+                                        icon={<Plus size={16} />}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    {curriculums.map(c => (
+                                        <div
+                                            key={c.id}
+                                            onClick={() => setSelectedCurriculumId(c.id)}
+                                            className={`p-3 rounded-xl cursor-pointer transition-all flex justify-between items-center group ${selectedCurriculumId === c.id
+                                                ? 'bg-violet-100 dark:bg-violet-900/30 border border-violet-300 dark:border-violet-700'
+                                                : 'bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                                                }`}
                                         >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
-                                ))}
-                                {curriculums.length === 0 && (
-                                    <p className="text-slate-400 dark:text-slate-500 text-sm italic text-center py-4">No templates yet.</p>
-                                )}
-                            </div>
-                        </div>
+                                            <div>
+                                                <p className="font-bold text-sm text-slate-800 dark:text-white">{c.name}</p>
+                                                {c.boardCode && <p className="text-xs text-slate-400">{c.boardCode}</p>}
+                                            </div>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleDeleteCurriculum(c.id); }}
+                                                className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    {curriculums.length === 0 && (
+                                        <p className="text-slate-400 dark:text-slate-500 text-sm italic text-center py-4">No templates yet.</p>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
 
                         {/* Topic Editor */}
-                        <div className="w-full lg:flex-1 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-6 shadow-sm">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-                                    Topics {selectedCurriculumId && `(${libraryCount})`}
-                                </h3>
-                                {selectedCurriculumId && (
-                                    <button
-                                        onClick={() => openAddTopicModal(null)}
-                                        className="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all"
-                                    >
-                                        <Plus size={16} /> Add Chapter
-                                    </button>
-                                )}
-                            </div>
-                            <div className="space-y-3 lg:max-h-[600px] lg:overflow-y-auto custom-scrollbar pr-2">
-                                {hierarchy.roots.map(root => {
-                                    const subtopics = hierarchy.childrenMap[root.id] || [];
-                                    const isExpanded = expandedChapters.has(root.id);
+                        <Card className="w-full lg:flex-1">
+                            <CardContent>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-lg font-bold text-slate-800 dark:text-white">
+                                        Topics {selectedCurriculumId && `(${libraryCount})`}
+                                    </h3>
+                                    {selectedCurriculumId && (
+                                        <Button
+                                            onClick={() => openAddTopicModal(null)}
+                                            size="sm"
+                                            className="bg-violet-600 hover:bg-violet-700 text-white"
+                                            icon={<Plus size={16} />}
+                                        >
+                                            Add Chapter
+                                        </Button>
+                                    )}
+                                </div>
+                                <div className="space-y-3 lg:max-h-[600px] lg:overflow-y-auto custom-scrollbar pr-2">
+                                    {hierarchy.roots.map(root => {
+                                        const subtopics = hierarchy.childrenMap[root.id] || [];
+                                        const isExpanded = expandedChapters.has(root.id);
 
-                                    return (
-                                        <div key={root.id} className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-900/30">
-                                            {/* Chapter Header */}
-                                            <div
-                                                className="flex items-center justify-between p-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                                                onClick={() => toggleChapter(root.id)}
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`p-1 rounded-md transition-transform duration-200 ${isExpanded ? 'rotate-90 text-violet-600' : 'text-slate-400'}`}>
-                                                        <ChevronDown size={18} />
+                                        return (
+                                            <div key={root.id} className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-900/30">
+                                                {/* Chapter Header */}
+                                                <div
+                                                    className="flex items-center justify-between p-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                                    onClick={() => toggleChapter(root.id)}
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`p-1 rounded-md transition-transform duration-200 ${isExpanded ? 'rotate-90 text-violet-600' : 'text-slate-400'}`}>
+                                                            <ChevronDown size={18} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-bold text-slate-800 dark:text-white">{root.title}</p>
+                                                            <p className="text-xs text-slate-400">{root.semester} • {subtopics.length} subtopics</p>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <p className="font-bold text-slate-800 dark:text-white">{root.title}</p>
-                                                        <p className="text-xs text-slate-400">{root.semester} • {subtopics.length} subtopics</p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <div className="flex flex-col gap-0.5 mr-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="flex flex-col gap-0.5 mr-2">
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); handleMoveTopic(root.id, 'up'); }}
+                                                                className="p-0.5 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded disabled:opacity-30"
+                                                                disabled={hierarchy.roots.indexOf(root) === 0}
+                                                            >
+                                                                <ArrowUp size={12} />
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); handleMoveTopic(root.id, 'down'); }}
+                                                                className="p-0.5 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded disabled:opacity-30"
+                                                                disabled={hierarchy.roots.indexOf(root) === hierarchy.roots.length - 1}
+                                                            >
+                                                                <ArrowDown size={12} />
+                                                            </button>
+                                                        </div>
                                                         <button
-                                                            onClick={(e) => { e.stopPropagation(); handleMoveTopic(root.id, 'up'); }}
-                                                            className="p-0.5 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded disabled:opacity-30"
-                                                            disabled={hierarchy.roots.indexOf(root) === 0}
+                                                            onClick={(e) => { e.stopPropagation(); openEditTopicModal(root); }}
+                                                            className="p-1.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg transition-colors"
+                                                            title="Edit Chapter"
                                                         >
-                                                            <ArrowUp size={12} />
+                                                            <Edit3 size={16} />
                                                         </button>
                                                         <button
-                                                            onClick={(e) => { e.stopPropagation(); handleMoveTopic(root.id, 'down'); }}
-                                                            className="p-0.5 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded disabled:opacity-30"
-                                                            disabled={hierarchy.roots.indexOf(root) === hierarchy.roots.length - 1}
+                                                            onClick={(e) => { e.stopPropagation(); openAddTopicModal(root.id); }}
+                                                            className="p-1.5 text-violet-600 hover:bg-violet-100 dark:hover:bg-violet-900/30 rounded-lg text-xs font-bold"
+                                                            title="Add Subtopic"
                                                         >
-                                                            <ArrowDown size={12} />
+                                                            <Plus size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleDeleteTopic(root.id); }}
+                                                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                                        >
+                                                            <Trash2 size={16} />
                                                         </button>
                                                     </div>
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); openEditTopicModal(root); }}
-                                                        className="p-1.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg transition-colors"
-                                                        title="Edit Chapter"
-                                                    >
-                                                        <Edit3 size={16} />
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); openAddTopicModal(root.id); }}
-                                                        className="p-1.5 text-violet-600 hover:bg-violet-100 dark:hover:bg-violet-900/30 rounded-lg text-xs font-bold"
-                                                        title="Add Subtopic"
-                                                    >
-                                                        <Plus size={16} />
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); handleDeleteTopic(root.id); }}
-                                                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
                                                 </div>
+
+                                                {/* Subtopics List */}
+                                                {isExpanded && (
+                                                    <div className="border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/20">
+                                                        {subtopics.length > 0 ? (
+                                                            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                                                                {subtopics.map(sub => (
+                                                                    <div key={sub.id} className="p-3 flex items-center justify-between pl-12 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+                                                                        <div className="flex items-center gap-3">
+                                                                            <div className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600" />
+                                                                            <span className="text-sm text-slate-600 dark:text-slate-300 font-medium">{sub.title}</span>
+                                                                        </div>
+                                                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                            <button
+                                                                                onClick={() => openEditTopicModal(sub)}
+                                                                                className="p-1 text-slate-300 hover:text-violet-500 transition-colors"
+                                                                            >
+                                                                                <Edit3 size={14} />
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => handleDeleteTopic(sub.id)}
+                                                                                className="p-1 text-slate-300 hover:text-red-500 transition-colors"
+                                                                            >
+                                                                                <Trash2 size={14} />
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            <div className="p-4 text-center text-xs text-slate-400 italic">
+                                                                No subtopics. Click + to add one.
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
+                                        );
+                                    })}
 
-                                            {/* Subtopics List */}
-                                            {isExpanded && (
-                                                <div className="border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/20">
-                                                    {subtopics.length > 0 ? (
-                                                        <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                                                            {subtopics.map(sub => (
-                                                                <div key={sub.id} className="p-3 flex items-center justify-between pl-12 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
-                                                                    <div className="flex items-center gap-3">
-                                                                        <div className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600" />
-                                                                        <span className="text-sm text-slate-600 dark:text-slate-300 font-medium">{sub.title}</span>
-                                                                    </div>
-                                                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                        <button
-                                                                            onClick={() => openEditTopicModal(sub)}
-                                                                            className="p-1 text-slate-300 hover:text-violet-500 transition-colors"
-                                                                        >
-                                                                            <Edit3 size={14} />
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => handleDeleteTopic(sub.id)}
-                                                                            className="p-1 text-slate-300 hover:text-red-500 transition-colors"
-                                                                        >
-                                                                            <Trash2 size={14} />
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    ) : (
-                                                        <div className="p-4 text-center text-xs text-slate-400 italic">
-                                                            No subtopics. Click + to add one.
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-
-                                {hierarchy.roots.length === 0 && selectedCurriculumId && (
-                                    <p className="text-slate-400 dark:text-slate-500 text-sm italic text-center py-8">No chapters yet. Add one!</p>
-                                )}
-                                {!selectedCurriculumId && (
-                                    <p className="text-slate-400 dark:text-slate-500 text-sm italic text-center py-8">Select a template to view topics.</p>
-                                )}
-                            </div>
-                        </div>
+                                    {hierarchy.roots.length === 0 && selectedCurriculumId && (
+                                        <p className="text-slate-400 dark:text-slate-500 text-sm italic text-center py-8">No chapters yet. Add one!</p>
+                                    )}
+                                    {!selectedCurriculumId && (
+                                        <p className="text-slate-400 dark:text-slate-500 text-sm italic text-center py-8">Select a template to view topics.</p>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
                     </div>
                 </>
             )}
 
             {/* Add Curriculum Modal */}
-            {showAddCurriculumModal && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-                    <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl w-full max-w-md shadow-2xl p-8 animate-slide-up">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-bold text-slate-900 dark:text-white">New Curriculum</h3>
-                            <button onClick={() => setShowAddCurriculumModal(false)} className="p-2 bg-slate-100 dark:bg-slate-700/50 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
-                                <X size={20} />
-                            </button>
+            <Modal
+                isOpen={showAddCurriculumModal}
+                onClose={() => setShowAddCurriculumModal(false)}
+                title="New Curriculum"
+                size="md"
+            >
+                <div className="p-6">
+                    <form onSubmit={handleAddCurriculum} className="space-y-5">
+                        <div>
+                            <Input
+                                label="Name"
+                                value={newCurriculumName}
+                                onChange={e => setNewCurriculumName(e.target.value)}
+                                placeholder="e.g. IGCSE Computer Science 2026"
+                                autoFocus
+                            />
                         </div>
-                        <form onSubmit={handleAddCurriculum} className="space-y-5">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Name</label>
-                                <input
-                                    value={newCurriculumName}
-                                    onChange={e => setNewCurriculumName(e.target.value)}
-                                    placeholder="e.g. IGCSE Computer Science 2026"
-                                    className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 outline-none transition-all placeholder-slate-400"
-                                    autoFocus
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Board Code (Optional)</label>
-                                <input
-                                    value={newCurriculumBoardCode}
-                                    onChange={e => setNewCurriculumBoardCode(e.target.value)}
-                                    placeholder="e.g. 0478"
-                                    className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 outline-none transition-all placeholder-slate-400"
-                                />
-                            </div>
-                            <button type="submit" className="w-full bg-violet-600 hover:bg-violet-700 text-white py-3 rounded-xl font-bold shadow-lg shadow-violet-600/20 transition-all">
-                                Create Template
-                            </button>
-                        </form>
-                    </div>
+                        <div>
+                            <Input
+                                label="Board Code (Optional)"
+                                value={newCurriculumBoardCode}
+                                onChange={e => setNewCurriculumBoardCode(e.target.value)}
+                                placeholder="e.g. 0478"
+                            />
+                        </div>
+                        <Button
+                            type="submit"
+                            className="w-full bg-violet-600 hover:bg-violet-700"
+                        >
+                            Create Template
+                        </Button>
+                    </form>
                 </div>
-            )}
+            </Modal>
 
             {/* Add Topic Modal */}
-            {showAddTopicModal && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-                    <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl w-full max-w-md shadow-2xl p-8 animate-slide-up">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                                {editingTopic ? 'Edit Topic' : (addingSubtopicTo ? 'Add Subtopic' : 'Add Chapter')}
-                            </h3>
-                            <button onClick={() => setShowAddTopicModal(false)} className="p-2 bg-slate-100 dark:bg-slate-700/50 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
-                                <X size={20} />
-                            </button>
+            <Modal
+                isOpen={showAddTopicModal}
+                onClose={() => setShowAddTopicModal(false)}
+                title={editingTopic ? 'Edit Topic' : (addingSubtopicTo ? 'Add Subtopic' : 'Add Chapter')}
+                size="md"
+            >
+                <div className="p-6">
+                    <form onSubmit={handleAddTopic} className="space-y-5">
+                        <div>
+                            <Input
+                                label="Title"
+                                value={newTopicTitle}
+                                onChange={e => setNewTopicTitle(e.target.value)}
+                                placeholder="e.g. 1.1 Data Representation"
+                                autoFocus
+                            />
                         </div>
-                        <form onSubmit={handleAddTopic} className="space-y-5">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Title</label>
-                                <input
-                                    value={newTopicTitle}
-                                    onChange={e => setNewTopicTitle(e.target.value)}
-                                    placeholder="e.g. 1.1 Data Representation"
-                                    className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 outline-none transition-all placeholder-slate-400"
-                                    autoFocus
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Semester</label>
-                                <div className="relative">
-                                    <select
-                                        value={newTopicSemester}
-                                        onChange={e => setNewTopicSemester(e.target.value as any)}
-                                        className="w-full appearance-none bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-white text-sm font-medium rounded-xl px-4 py-3 pr-10 outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all cursor-pointer"
-                                    >
-                                        <option value="Semester 1">Semester 1</option>
-                                        <option value="Semester 2">Semester 2</option>
-                                    </select>
-                                    <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                </div>
-                            </div>
-                            <button type="submit" className="w-full bg-violet-600 hover:bg-violet-700 text-white py-3 rounded-xl font-bold shadow-lg shadow-violet-600/20 transition-all">
-                                {editingTopic ? 'Update Topic' : (addingSubtopicTo ? 'Add Subtopic' : 'Add Chapter')}
-                            </button>
-                        </form>
-                    </div>
+                        <div>
+                            <Select
+                                label="Semester"
+                                value={newTopicSemester}
+                                onChange={e => setNewTopicSemester(e.target.value as any)}
+                                options={[
+                                    { label: 'Semester 1', value: 'Semester 1' },
+                                    { label: 'Semester 2', value: 'Semester 2' }
+                                ]}
+                            />
+                        </div>
+                        <Button
+                            type="submit"
+                            className="w-full bg-violet-600 hover:bg-violet-700"
+                        >
+                            {editingTopic ? 'Update Topic' : (addingSubtopicTo ? 'Add Subtopic' : 'Add Chapter')}
+                        </Button>
+                    </form>
                 </div>
-            )}
+            </Modal>
         </div>
     );
 };

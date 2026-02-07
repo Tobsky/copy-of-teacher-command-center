@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../../../context/AppContext';
 import { Users, Plus, UserPlus, Trash2, Search, X, ChevronRight, GraduationCap, Download, Mail, Edit2 } from 'lucide-react';
 import ExcelImporter from './ExcelImporter';
-import StudentProfileModal from './StudentProfileModal';
+import StudentProfileModal from '../students/StudentProfileModal';
 import PromoteClassModal from './PromoteClassModal';
-import { Student } from '../types';
+import { Student } from '../../../types';
+import { Modal } from '../../ui/Modal';
+import { Button } from '../../ui/Button';
+import { Input } from '../../ui/Input';
 
 const ClassManager: React.FC = () => {
   const { classes, students, addClass, updateClass, deleteClass, addStudent, deleteStudent, fetchClasses, fetchStudents } = useAppContext();
@@ -99,12 +102,15 @@ const ClassManager: React.FC = () => {
 
         {/* Actions Row */}
         <div className="flex gap-2 mb-4">
-          <button
+          <Button
             onClick={() => setShowPromoteModal(true)}
-            className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-sm"
+            variant="secondary"
+            size="sm"
+            className="flex-1"
+            icon={<Download size={14} />}
           >
-            <Download size={14} /> Promote Class
-          </button>
+            Promote Class
+          </Button>
         </div>
 
         <div className="flex-1 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl overflow-hidden flex flex-col shadow-xl shadow-slate-200/50 dark:shadow-none animate-slide-up">
@@ -167,18 +173,21 @@ const ClassManager: React.FC = () => {
           </div>
 
           <div className="p-4 bg-slate-50 dark:bg-slate-900/30 border-t border-slate-100 dark:border-slate-700/50 flex flex-col gap-3">
-            <button
+            <Button
               onClick={() => setShowAddClass(true)}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-600/20 hover:shadow-blue-600/40 hover:-translate-y-0.5"
+              className="w-full"
+              icon={<Plus size={18} />}
             >
-              <Plus size={18} /> Add New Class
-            </button>
-            <button
+              Add New Class
+            </Button>
+            <Button
               onClick={() => setShowImporter(true)}
-              className="w-full bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 px-4 py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700 transition-all shadow-sm hover:shadow-md"
+              variant="secondary"
+              className="w-full"
+              icon={<Download size={18} />}
             >
-              <Download size={18} /> Import from Excel
-            </button>
+              Import from Excel
+            </Button>
           </div>
         </div>
       </div>
@@ -270,26 +279,26 @@ const ClassManager: React.FC = () => {
               <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-3">Quick Add Student</h4>
               <form onSubmit={handleAddStudent} className="flex flex-col sm:flex-row gap-3 sm:items-end p-1">
                 <div className="flex-1">
-                  <label className="block text-xs font-medium text-slate-500 mb-1.5 ml-1">Student Name</label>
-                  <input
+                  <Input
+                    label="Student Name"
                     value={newStudentName}
                     onChange={e => setNewStudentName(e.target.value)}
-                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder-slate-400 hover:border-slate-300 dark:hover:border-slate-600"
                     placeholder="John Doe"
+                    className="py-2.5"
                   />
                 </div>
                 <div className="flex-1">
-                  <label className="block text-xs font-medium text-slate-500 mb-1.5 ml-1">Email</label>
-                  <input
+                  <Input
+                    label="Email"
                     value={newStudentEmail}
                     onChange={e => setNewStudentEmail(e.target.value)}
-                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder-slate-400 hover:border-slate-300 dark:hover:border-slate-600"
                     placeholder="john@example.com"
+                    className="py-2.5"
                   />
                 </div>
-                <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-600/20 hover:shadow-emerald-600/40 hover:-translate-y-0.5">
-                  <Plus size={18} /> <span className="sm:hidden">Add</span> <span className="hidden sm:inline">Add Student</span>
-                </button>
+                <Button type="submit" variant="primary" className="bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20" icon={<Plus size={18} />}>
+                  <span className="sm:hidden">Add</span> <span className="hidden sm:inline">Add Student</span>
+                </Button>
               </form>
             </div>
           </div>
@@ -304,139 +313,123 @@ const ClassManager: React.FC = () => {
       </div>
 
       {/* Add Class Modal */}
-      {showAddClass && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-8 w-full max-w-sm shadow-2xl animate-scale-in">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-slate-800 dark:text-white">Add New Class</h3>
-              <button onClick={() => setShowAddClass(false)} className="p-2 bg-slate-100 dark:bg-slate-700/50 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
-                <X size={20} />
-              </button>
-            </div>
-            <form onSubmit={handleCreateClass} className="space-y-5">
-              <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Class Name</label>
-                <input
-                  value={newClassName}
-                  onChange={e => setNewClassName(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all placeholder-slate-400"
-                  placeholder="e.g. AP Computer Science"
+      <Modal
+        isOpen={showAddClass}
+        onClose={() => setShowAddClass(false)}
+        title="Add New Class"
+        size="sm"
+      >
+        <div className="p-6">
+          <form onSubmit={handleCreateClass} className="space-y-5">
+            <Input
+              label="Class Name"
+              value={newClassName}
+              onChange={e => setNewClassName(e.target.value)}
+              placeholder="e.g. AP Computer Science"
+            />
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <Input
+                  label="Section"
+                  value={newClassSection}
+                  onChange={e => setNewClassSection(e.target.value)}
+                  placeholder="101"
                 />
               </div>
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Section</label>
-                  <input
-                    value={newClassSection}
-                    onChange={e => setNewClassSection(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all placeholder-slate-400"
-                    placeholder="101"
-                  />
-                </div>
-                <div className="flex-1">
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Time</label>
-                  <input
-                    value={newClassTime}
-                    onChange={e => setNewClassTime(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all placeholder-slate-400"
-                    placeholder="09:00 AM"
-                  />
-                </div>
+              <div className="flex-1">
+                <Input
+                  label="Time"
+                  value={newClassTime}
+                  onChange={e => setNewClassTime(e.target.value)}
+                  placeholder="09:00 AM"
+                />
               </div>
-              <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold shadow-lg shadow-blue-600/20 hover:shadow-blue-600/40 transition-all hover:scale-[1.02] active:scale-[0.98]">
-                Create Class
-              </button>
-            </form>
-          </div>
+            </div>
+            <Button type="submit" className="w-full">
+              Create Class
+            </Button>
+          </form>
         </div>
-      )}
+      </Modal>
 
       {/* Import Modal */}
-      {showImporter && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-8 w-full max-w-lg shadow-2xl relative animate-scale-in">
-            <button
-              onClick={() => setShowImporter(false)}
-              className="absolute top-6 right-6 p-2 bg-slate-100 dark:bg-slate-700/50 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-            >
-              <X size={20} />
-            </button>
-            <ExcelImporter
-              classes={classes}
-              onImportComplete={() => {
-                fetchStudents(); // Refresh data
-                setShowImporter(false);
-              }}
-            />
-          </div>
+      <Modal
+        isOpen={showImporter}
+        onClose={() => setShowImporter(false)}
+        size="lg"
+        showCloseButton={true}
+      >
+        <div className="p-8">
+          <ExcelImporter
+            classes={classes}
+            onImportComplete={() => {
+              fetchStudents(); // Refresh data
+              setShowImporter(false);
+            }}
+          />
         </div>
-      )}
+      </Modal>
 
       {/* Edit Class Modal */}
       {/* Edit Class Modal */}
-      {showEditClass && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-8 w-full max-w-sm shadow-2xl relative animate-scale-in">
-            <button
-              onClick={() => setShowEditClass(false)}
-              className="absolute top-6 right-6 p-2 bg-slate-100 dark:bg-slate-700/50 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-            >
-              <X size={20} />
-            </button>
-            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
-                <Edit2 size={20} />
-              </div>
-              Edit Class
-            </h3>
-            <form onSubmit={handleEditClass} className="space-y-5">
-              <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Class Name</label>
-                <input
-                  value={editClassName}
-                  onChange={e => setEditClassName(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all placeholder-slate-400"
-                  placeholder="CS 101"
+      {/* Edit Class Modal */}
+      <Modal
+        isOpen={showEditClass}
+        onClose={() => setShowEditClass(false)}
+        title={
+          <div className="flex items-center gap-2">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
+              <Edit2 size={20} />
+            </div>
+            Edit Class
+          </div>
+        }
+        size="sm"
+      >
+        <div className="p-6">
+          <form onSubmit={handleEditClass} className="space-y-5">
+            <Input
+              label="Class Name"
+              value={editClassName}
+              onChange={e => setEditClassName(e.target.value)}
+              placeholder="CS 101"
+              required
+            />
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <Input
+                  label="Section"
+                  value={editClassSection}
+                  onChange={e => setEditClassSection(e.target.value)}
+                  placeholder="101"
                   required
                 />
               </div>
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Section</label>
-                  <input
-                    value={editClassSection}
-                    onChange={e => setEditClassSection(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all placeholder-slate-400"
-                    placeholder="101"
-                    required
-                  />
-                </div>
-                <div className="flex-1">
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Schedule</label>
-                  <input
-                    value={editClassTime}
-                    onChange={e => setEditClassTime(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all placeholder-slate-400"
-                    placeholder="09:00 AM"
-                  />
-                </div>
+              <div className="flex-1">
+                <Input
+                  label="Schedule"
+                  value={editClassTime}
+                  onChange={e => setEditClassTime(e.target.value)}
+                  placeholder="09:00 AM"
+                />
               </div>
-              <div className="flex gap-4 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowEditClass(false)}
-                  className="flex-1 px-4 py-3 text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded-xl transition-all"
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold shadow-lg shadow-blue-600/20 hover:shadow-blue-600/40 transition-all hover:scale-[1.02] active:scale-[0.98]">
-                  Save Changes
-                </button>
-              </div>
-            </form>
-          </div>
+            </div>
+            <div className="flex gap-4 pt-2">
+              <Button
+                type="button"
+                onClick={() => setShowEditClass(false)}
+                variant="secondary"
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button type="submit" className="flex-1">
+                Save Changes
+              </Button>
+            </div>
+          </form>
         </div>
-      )}
+      </Modal>
 
       {
         showPromoteModal && (

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
+import { supabase } from '../../../supabaseClient';
 import { Mail, Lock, Loader2, AlertCircle, ArrowRight } from 'lucide-react';
+import { Input } from '../../ui/Input';
+import { Button } from '../../ui/Button';
 
 const AuthPage: React.FC = () => {
     const [searchParams] = useSearchParams();
@@ -96,44 +98,30 @@ const AuthPage: React.FC = () => {
 
                 <form onSubmit={handleAuth} className="space-y-5">
                     {!isLogin && (
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Full Name</label>
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                                    <ArrowRight size={18} />
-                                </div>
-                                <input
-                                    type="text"
-                                    required
-                                    value={fullName}
-                                    onChange={(e) => setFullName(e.target.value)}
-                                    className="block w-full pl-10 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white rounded-xl py-3 px-4 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all placeholder-slate-400 dark:placeholder-slate-600"
-                                    placeholder="John Doe"
-                                />
-                            </div>
-                        </div>
+                        <Input
+                            label="Full Name"
+                            type="text"
+                            required
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                            placeholder="John Doe"
+                            startIcon={<ArrowRight size={18} />}
+                        />
                     )}
 
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Email Address</label>
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                                <Mail size={18} />
-                            </div>
-                            <input
-                                type="email"
-                                required
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="block w-full pl-10 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white rounded-xl py-3 px-4 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all placeholder-slate-400 dark:placeholder-slate-600"
-                                placeholder="teacher@school.edu"
-                            />
-                        </div>
-                    </div>
+                    <Input
+                        label="Email Address"
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="teacher@school.edu"
+                        startIcon={<Mail size={18} />}
+                    />
 
                     {!isForgotPassword && (
-                        <div>
-                            <div className="flex justify-between items-center mb-2">
+                        <div className="space-y-1">
+                            <div className="flex justify-between items-center mb-1">
                                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Password</label>
                                 {isLogin && (
                                     <button
@@ -145,34 +133,40 @@ const AuthPage: React.FC = () => {
                                     </button>
                                 )}
                             </div>
+                            {/* Re-implementing Password Input manually or using Input without label to control the top label logic layout difference? 
+                                Actually, I can just use Input and handle the forgot password link differently or pass ReactNode as label?
+                                Input accepts string label. 
+                                Let's just put the logic above and use Input with no label but with startIcon. 
+                            */}
                             <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                                    <Lock size={18} />
-                                </div>
-                                <input
-                                    type="password"
-                                    required
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="block w-full pl-10 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white rounded-xl py-3 px-4 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all placeholder-slate-400 dark:placeholder-slate-600"
-                                    placeholder="••••••••"
-                                    minLength={6}
-                                />
+                                {/* Using Input component but we want the 'Forgot Password' link to align with label. 
+                                    My Input component renders label inside. 
+                                    Let's just use the Input component and put the Forgot Password link separately if needed, 
+                                    OR just use the Input component normally and put the link under it? 
+                                    Standard pattern is top right. 
+                                    Let's manually reconstruct the label row then use Input with no label prop.
+                                */}
                             </div>
+                            <Input
+                                type="password"
+                                required
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="••••••••"
+                                minLength={6}
+                                startIcon={<Lock size={18} />}
+                            />
                         </div>
                     )}
 
-                    <button
+                    <Button
                         type="submit"
                         disabled={loading}
-                        className="w-full flex items-center justify-center py-3.5 px-4 rounded-xl text-white font-bold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-white dark:focus:ring-offset-slate-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-600/20 hover:shadow-blue-600/40 hover:-translate-y-0.5 active:translate-y-0"
+                        isLoading={loading}
+                        className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 border-none"
                     >
-                        {loading ? (
-                            <Loader2 className="animate-spin" size={20} />
-                        ) : (
-                            isForgotPassword ? 'Send Reset Link' : (isLogin ? 'Sign In' : 'Create Account')
-                        )}
-                    </button>
+                        {isForgotPassword ? 'Send Reset Link' : (isLogin ? 'Sign In' : 'Create Account')}
+                    </Button>
                 </form>
 
                 {isForgotPassword ? (

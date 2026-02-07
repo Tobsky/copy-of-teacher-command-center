@@ -14,10 +14,10 @@ import {
   Moon,
   Calendar
 } from 'lucide-react';
-import { useAppContext } from '../context/AppContext';
-import { useTheme } from '../context/ThemeContext';
+import { useAppContext } from '../../context/AppContext';
+import { useTheme } from '../../context/ThemeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import SessionManager from './SessionManager';
+import SessionManager from '../features/sessions/SessionManager';
 
 interface SidebarProps {
   isOpen: boolean;

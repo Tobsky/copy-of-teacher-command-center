@@ -1,41 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { supabase } from './supabaseClient';
-import AuthPage from './components/AuthPage';
-import Sidebar from './components/Sidebar';
-import Dashboard from './components/Dashboard';
-import ClassManager from './components/ClassManager';
-import Attendance from './components/Attendance';
-import Gradebook from './components/Gradebook';
-import SnippetBank from './components/SnippetBank';
-import SmartFeedback from './components/SmartFeedback';
-import LessonPlanner from './components/LessonPlanner';
-import GradeCurving from './components/GradeCurving';
-import LandingPage from './components/LandingPage';
-import SyllabusHub from './components/SyllabusHub';
+import AuthPage from './components/features/auth/AuthPage';
+import Sidebar from './components/layout/Sidebar';
+import Dashboard from './components/features/dashboard/Dashboard';
+import ClassManager from './components/features/classes/ClassManager';
+import Attendance from './components/features/attendance/Attendance';
+import Gradebook from './components/features/gradebook/Gradebook';
+import SnippetBank from './components/features/snippets/SnippetBank';
+import SmartFeedback from './components/features/feedback/SmartFeedback';
+import LessonPlanner from './components/features/planner/LessonPlanner';
+import GradeCurving from './components/features/curving/GradeCurving';
+import LandingPage from './components/features/landing/LandingPage';
+import SyllabusHub from './components/features/syllabus/SyllabusHub';
 import { ThemeProvider } from './context/ThemeContext';
+import { useAuth } from './context/AuthContext';
 import { Menu } from 'lucide-react';
 
 const App: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [session, setSession] = useState<any>(null); // Type 'any' for simplicity with Supabase session
-  const [loading, setLoading] = useState(true);
+  const { session, loading } = useAuth();
   const location = useLocation();
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   if (loading) {
     return (

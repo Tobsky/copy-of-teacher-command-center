@@ -1,9 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../../../context/AppContext';
 import { Calculator, Download, Plus, X, Settings, BarChart3, RefreshCw, Trash2, Edit2 } from 'lucide-react';
-import { ExamBoard, SchoolGradingSystem, CurvedGradeResult } from '../types';
-import { curveGrades } from '../utils/gradeCurving';
-import { PRESET_BOARDS, DEFAULT_SCHOOL_GRADING, IB_SCHOOL_GRADING } from '../utils/examBoards';
+import { ExamBoard, SchoolGradingSystem, CurvedGradeResult } from '../../../types';
+import { curveGrades } from '../../../utils/gradeCurving';
+import { PRESET_BOARDS, DEFAULT_SCHOOL_GRADING, IB_SCHOOL_GRADING } from '../../../utils/examBoards';
+import { Button } from '../../ui/Button';
+import { Input } from '../../ui/Input';
+import { Select } from '../../ui/Select';
+import { Modal } from '../../ui/Modal';
+import { Card, CardHeader, CardTitle, CardContent } from '../../ui/Card';
 
 interface StudentScore {
     studentId: string;
@@ -322,224 +327,206 @@ const GradeCurving: React.FC = () => {
                 </div>
 
                 <div className="flex gap-3 flex-wrap">
-                    <button
+                    <Button
                         onClick={handleExportCSV}
                         disabled={curvedResults.length === 0}
-                        className="px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2 transition-all shadow-sm
-                        bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 
-                        text-slate-600 dark:text-slate-300 hover:text-purple-600 dark:hover:text-purple-400
-                        disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-md"
+                        variant="secondary"
+                        size="sm"
+                        icon={<Download size={16} />}
+                        className="hover:text-purple-600 dark:hover:text-purple-400"
                     >
-                        <Download size={16} /> Export CSV
-                    </button>
+                        Export CSV
+                    </Button>
                 </div>
             </header>
 
             {/* Configuration Panel */}
-            <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-6 shadow-xl shadow-slate-200/50 dark:shadow-none animate-slide-up">
-                <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
-                    <Settings size={18} className="text-slate-400" />
-                    Configuration
-                </h3>
+            <Card className="animate-slide-up">
+                <CardContent className="p-6">
+                    <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+                        <Settings size={18} className="text-slate-400" />
+                        Configuration
+                    </h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {/* Class Selector */}
-                    <div>
-                        <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Class</label>
-                        <div className="relative">
-                            <select
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {/* Class Selector */}
+                        <div>
+                            <Select
+                                label="Class"
                                 value={selectedClassId}
                                 onChange={(e) => {
                                     setSelectedClassId(e.target.value);
                                     setSelectedAssignmentId('');
                                 }}
-                                className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all appearance-none"
-                            >
-                                {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                            </select>
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 4L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                            </div>
+                                options={classes.map(c => ({ label: c.name, value: c.id }))}
+                            />
                         </div>
-                    </div>
 
-                    {/* Assignment Selector */}
-                    <div>
-                        <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Assignment (Optional)</label>
-                        <div className="relative">
-                            <select
+                        {/* Assignment Selector */}
+                        <div>
+                            <Select
+                                label="Assignment (Optional)"
                                 value={selectedAssignmentId}
                                 onChange={(e) => setSelectedAssignmentId(e.target.value)}
-                                className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all appearance-none"
                             >
                                 <option value="">-- Select Assignment --</option>
                                 {activeAssignments.map(a => (
                                     <option key={a.id} value={a.id}>{a.title} ({a.maxPoints} pts)</option>
                                 ))}
-                            </select>
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 4L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                            </div>
+                            </Select>
+                        </div>
+
+                        {/* Internal Max */}
+                        <div>
+                            <Input
+                                label="Internal Maximum"
+                                type="number"
+                                value={internalMax}
+                                onChange={(e) => setInternalMax(parseInt(e.target.value) || 0)}
+                                min={1}
+                            />
+                        </div>
+
+                        {/* Board Selector */}
+                        <div>
+                            {allBoards.length === 0 ? (
+                                <div className="p-3 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl text-center mt-6 h-[50px] flex items-center justify-center gap-2">
+                                    <p className="text-xs text-slate-500">No boards found</p>
+                                    <button
+                                        onClick={handleRestoreDefaults}
+                                        className="text-xs text-purple-600 hover:text-purple-700 font-bold uppercase tracking-wide"
+                                    >
+                                        Load Defaults
+                                    </button>
+                                </div>
+                            ) : (
+                                <Select
+                                    label="Examination Board"
+                                    value={selectedBoardId}
+                                    onChange={(e) => setSelectedBoardId(e.target.value)}
+                                    options={allBoards.map(b => ({ label: `${b.name} (max: ${b.maxScore})`, value: b.id }))}
+                                />
+                            )}
                         </div>
                     </div>
 
-                    {/* Internal Max */}
-                    <div>
-                        <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Internal Maximum</label>
-                        <input
-                            type="number"
-                            value={internalMax}
-                            onChange={(e) => setInternalMax(parseInt(e.target.value) || 0)}
-                            min={1}
-                            className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all"
-                        />
-                    </div>
+                    {/* Actions Row */}
+                    <div className="flex gap-3 mt-6 flex-wrap">
+                        <Button
+                            onClick={() => setShowManualEntry(!showManualEntry)}
+                            variant={showManualEntry ? "primary" : "secondary"}
+                            className={showManualEntry ? "bg-purple-600 hover:bg-purple-700 shadow-purple-500/25" : ""}
+                            icon={<Plus size={16} />}
+                        >
+                            {showManualEntry ? 'Using Manual Entry' : 'Manual Score Entry'}
+                        </Button>
 
-                    {/* Board Selector */}
-                    <div>
-                        <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Examination Board</label>
+                        <Button
+                            onClick={() => setShowGradingEditor(!showGradingEditor)}
+                            variant="secondary"
+                            icon={<Settings size={16} />}
+                        >
+                            Edit School Grading
+                        </Button>
 
-                        {allBoards.length === 0 ? (
-                            <div className="p-3 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl text-center">
-                                <p className="text-xs text-slate-500 mb-2">No boards found</p>
-                                <button
-                                    onClick={handleRestoreDefaults}
-                                    className="text-xs text-purple-600 hover:text-purple-700 font-bold uppercase tracking-wide"
-                                >
-                                    Load Defaults
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="relative">
-                                <select
-                                    value={selectedBoardId}
-                                    onChange={(e) => setSelectedBoardId(e.target.value)}
-                                    className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all appearance-none cursor-pointer"
-                                >
-                                    {allBoards.map(b => (
-                                        <option key={b.id} value={b.id}>{b.name} (max: {b.maxScore})</option>
-                                    ))}
-                                </select>
-                                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 4L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                                </div>
-                            </div>
+                        <Button
+                            onClick={() => {
+                                setEditingBoard(JSON.parse(JSON.stringify(activeBoard)));
+                                setShowBoardEditor(true);
+                            }}
+                            variant="secondary"
+                            icon={<Edit2 size={16} />}
+                        >
+                            Edit Board
+                        </Button>
+
+                        <div className="flex-1"></div>
+
+                        <Button
+                            onClick={handleDeleteBoard}
+                            title="Delete current board"
+                            variant="danger"
+                            className="p-2.5"
+                        >
+                            <Trash2 size={18} />
+                        </Button>
+
+                        <Button
+                            onClick={handleCreateNewBoard}
+                            className="bg-slate-800 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-600 text-white"
+                            icon={<Plus size={16} />}
+                        >
+                            New Board
+                        </Button>
+
+                        {allBoards.length > 0 && (
+                            <Button
+                                onClick={handleRestoreDefaults}
+                                className="px-3 text-slate-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                                title="Restore Default Boards"
+                                variant="ghost"
+                            >
+                                <RefreshCw size={16} />
+                            </Button>
                         )}
                     </div>
-                </div>
-
-                {/* Actions Row */}
-                <div className="flex gap-3 mt-6 flex-wrap">
-                    <button
-                        onClick={() => setShowManualEntry(!showManualEntry)}
-                        className={`px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 transition-all shadow-sm ${showManualEntry
-                            ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-purple-500/25 shadow-md'
-                            : 'bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
-                            }`}
-                    >
-                        <Plus size={16} /> {showManualEntry ? 'Using Manual Entry' : 'Manual Score Entry'}
-                    </button>
-
-                    <button
-                        onClick={() => setShowGradingEditor(!showGradingEditor)}
-                        className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl text-sm font-medium flex items-center gap-2 transition-all shadow-sm"
-                    >
-                        <Settings size={16} /> Edit School Grading
-                    </button>
-
-                    <button
-                        onClick={() => {
-                            setEditingBoard(JSON.parse(JSON.stringify(activeBoard)));
-                            setShowBoardEditor(true);
-                        }}
-                        className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl text-sm font-medium flex items-center gap-2 transition-all shadow-sm"
-                    >
-                        <Edit2 size={16} /> Edit Board
-                    </button>
-
-                    <div className="flex-1"></div>
-
-                    <button
-                        onClick={handleDeleteBoard}
-                        title="Delete current board"
-                        className="p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-red-500 hover:border-red-200 dark:hover:border-red-900/30 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-all shadow-sm"
-                    >
-                        <Trash2 size={18} />
-                    </button>
-
-                    <button
-                        onClick={handleCreateNewBoard}
-                        className="px-4 py-2.5 bg-slate-800 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-600 text-white border border-transparent rounded-xl text-sm font-medium flex items-center gap-2 transition-all shadow-md"
-                    >
-                        <Plus size={16} /> New Board
-                    </button>
-
-                    {allBoards.length > 0 && (
-                        <button
-                            onClick={handleRestoreDefaults}
-                            className="px-3 py-2.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl text-xs font-medium transition-all"
-                            title="Restore Default Boards"
-                        >
-                            <RefreshCw size={16} />
-                        </button>
-                    )}
-                </div>
-            </div>
+                </CardContent>
+            </Card>
 
             {/* Manual Score Entry */}
             {showManualEntry && (
-                <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-6 shadow-xl shadow-slate-200/50 dark:shadow-none animate-slide-up">
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-4 uppercase tracking-wide">Manual Score Entry</h4>
-                    <div className="flex gap-4 items-end flex-wrap mb-6">
-                        <div className="flex-1 min-w-[200px]">
-                            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase">Student Name</label>
-                            <input
-                                value={newStudentName}
-                                onChange={(e) => setNewStudentName(e.target.value)}
-                                className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all placeholder-slate-400"
-                                placeholder="Student name"
-                            />
-                        </div>
-                        <div className="w-32">
-                            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase">Score</label>
-                            <input
-                                type="number"
-                                value={newStudentScore}
-                                onChange={(e) => setNewStudentScore(e.target.value)}
-                                className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all placeholder-slate-400"
-                                placeholder="0"
-                            />
-                        </div>
-                        <button
-                            onClick={handleAddManualScore}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition-all shadow-md shadow-emerald-600/20 hover:shadow-emerald-600/40"
-                        >
-                            Add
-                        </button>
-                    </div>
-
-                    {manualScores.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                            {manualScores.map(s => (
-                                <div key={s.studentId} className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-sm flex items-center gap-3">
-                                    <span className="text-slate-700 dark:text-slate-300 font-medium">{s.studentName}: <span className="font-mono ml-1">{s.rawScore}</span></span>
-                                    <button
-                                        onClick={() => handleRemoveManualScore(s.studentId)}
-                                        className="text-slate-400 hover:text-red-500 transition-colors"
-                                    >
-                                        <X size={14} />
-                                    </button>
-                                </div>
-                            ))}
-                            <button
-                                onClick={() => setManualScores([])}
-                                className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 text-sm flex items-center gap-1 px-2 py-1.5 transition-colors font-medium"
+                <Card className="animate-slide-up">
+                    <CardContent className="p-6">
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-4 uppercase tracking-wide">Manual Score Entry</h4>
+                        <div className="flex gap-4 items-end flex-wrap mb-6">
+                            <div className="flex-1 min-w-[200px]">
+                                <Input
+                                    label="Student Name"
+                                    value={newStudentName}
+                                    onChange={(e) => setNewStudentName(e.target.value)}
+                                    placeholder="Student name"
+                                />
+                            </div>
+                            <div className="w-32">
+                                <Input
+                                    label="Score"
+                                    type="number"
+                                    value={newStudentScore}
+                                    onChange={(e) => setNewStudentScore(e.target.value)}
+                                    placeholder="0"
+                                />
+                            </div>
+                            <Button
+                                onClick={handleAddManualScore}
+                                className="bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20"
                             >
-                                <RefreshCw size={14} /> Clear All
-                            </button>
+                                Add
+                            </Button>
                         </div>
-                    )}
-                </div>
+
+                        {manualScores.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                                {manualScores.map(s => (
+                                    <div key={s.studentId} className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-sm flex items-center gap-3">
+                                        <span className="text-slate-700 dark:text-slate-300 font-medium">{s.studentName}: <span className="font-mono ml-1">{s.rawScore}</span></span>
+                                        <button
+                                            onClick={() => handleRemoveManualScore(s.studentId)}
+                                            className="text-slate-400 hover:text-red-500 transition-colors"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                ))}
+                                <button
+                                    onClick={() => setManualScores([])}
+                                    className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 text-sm flex items-center gap-1 px-2 py-1.5 transition-colors font-medium"
+                                >
+                                    <RefreshCw size={14} /> Clear All
+                                </button>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
             )}
 
             {/* Results Section */}
@@ -680,40 +667,32 @@ const GradeCurving: React.FC = () => {
             </div>
 
             {/* Board Editor Modal */}
-            {showBoardEditor && editingBoard && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-                    <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl w-full max-w-lg shadow-2xl p-8 animate-slide-up flex flex-col max-h-[90vh]">
-                        <div className="flex justify-between items-center mb-8">
-                            <div>
-                                <h3 className="text-xl font-bold text-slate-900 dark:text-white">Edit Examination Board</h3>
-                                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Configure grading boundaries and max scores.</p>
-                            </div>
-                            <button
-                                onClick={() => setShowBoardEditor(false)}
-                                className="p-2 bg-slate-100 dark:bg-slate-700/50 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
 
-                        <div className="space-y-6 overflow-y-auto pr-2 flex-1 custom-scrollbar">
+            {/* Board Editor Modal */}
+            <Modal
+                isOpen={showBoardEditor && !!editingBoard}
+                onClose={() => setShowBoardEditor(false)}
+                title="Edit Examination Board"
+                size="md"
+            >
+                {editingBoard && (
+                    <div className="p-6">
+                        <div className="space-y-6 overflow-y-auto pr-2 custom-scrollbar max-h-[70vh]">
                             <div className="grid grid-cols-2 gap-5">
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Board Name</label>
-                                    <input
+                                    <Input
+                                        label="Board Name"
                                         value={editingBoard.name}
                                         onChange={(e) => setEditingBoard({ ...editingBoard, name: e.target.value })}
-                                        className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all"
                                         placeholder="e.g. Custom Board"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Max Score</label>
-                                    <input
+                                    <Input
+                                        label="Max Score"
                                         type="number"
                                         value={editingBoard.maxScore}
                                         onChange={(e) => setEditingBoard({ ...editingBoard, maxScore: parseInt(e.target.value) || 0 })}
-                                        className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all"
                                     />
                                 </div>
                             </div>
@@ -721,12 +700,15 @@ const GradeCurving: React.FC = () => {
                             <div className="space-y-4">
                                 <div className="flex justify-between items-center">
                                     <h4 className="font-bold text-sm text-slate-800 dark:text-slate-200">Grade Boundaries</h4>
-                                    <button
+                                    <Button
                                         onClick={handleAddBoundary}
-                                        className="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 px-3 py-1.5 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors flex items-center gap-1 font-medium"
+                                        size="sm"
+                                        variant="secondary"
+                                        className="bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
+                                        icon={<Plus size={14} />}
                                     >
-                                        <Plus size={14} /> Add Grade
-                                    </button>
+                                        Add Grade
+                                    </Button>
                                 </div>
 
                                 <div className="space-y-2">
@@ -773,87 +755,81 @@ const GradeCurving: React.FC = () => {
                         </div>
 
                         <div className="flex gap-4 mt-8 pt-6 border-t border-slate-100 dark:border-slate-700">
-                            <button
+                            <Button
                                 onClick={handleResetBoard}
-                                className="flex-1 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl text-sm font-medium transition-all shadow-sm"
+                                variant="secondary"
+                                className="flex-1"
                             >
                                 Reset
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                                 onClick={handleSaveBoard}
-                                className="flex-1 px-4 py-2.5 bg-slate-900 dark:bg-blue-600 hover:bg-slate-800 dark:hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-all shadow-md hover:shadow-lg"
+                                className="flex-1 bg-slate-900 dark:bg-blue-600 hover:bg-slate-800 dark:hover:bg-blue-700"
                             >
                                 Save as Custom Board
-                            </button>
+                            </Button>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
+            </Modal>
 
             {/* Grading System Editor Modal */}
-            {showGradingEditor && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-                    <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl w-full max-w-lg shadow-2xl p-8 animate-slide-up">
-                        <div className="flex justify-between items-center mb-8">
-                            <div>
-                                <h3 className="text-xl font-bold text-slate-900 dark:text-white">School Grading System</h3>
-                                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Define internal school grade boundaries.</p>
+            <Modal
+                isOpen={showGradingEditor}
+                onClose={() => setShowGradingEditor(false)}
+                title="School Grading System"
+                size="md"
+            >
+                <div className="p-6">
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Define internal school grade boundaries.</p>
+
+                    <div className="space-y-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
+                        {schoolGrading.grades.map((grade, idx) => (
+                            <div key={grade.label} className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700/50">
+                                <span className={`font-bold w-10 text-center ${getGradeColor(grade.label)}`}>{grade.label}</span>
+                                <input
+                                    type="number"
+                                    value={grade.minPercent}
+                                    onChange={(e) => {
+                                        const newGrades = [...schoolGrading.grades];
+                                        newGrades[idx] = { ...grade, minPercent: parseFloat(e.target.value) || 0 };
+                                        setSchoolGrading({ ...schoolGrading, grades: newGrades });
+                                    }}
+                                    className="w-20 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1.5 text-sm text-center text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-purple-500/20 outline-none"
+                                />
+                                <span className="text-slate-400">-</span>
+                                <input
+                                    type="number"
+                                    value={grade.maxPercent}
+                                    onChange={(e) => {
+                                        const newGrades = [...schoolGrading.grades];
+                                        newGrades[idx] = { ...grade, maxPercent: parseFloat(e.target.value) || 0 };
+                                        setSchoolGrading({ ...schoolGrading, grades: newGrades });
+                                    }}
+                                    className="w-20 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1.5 text-sm text-center text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-purple-500/20 outline-none"
+                                />
+                                <span className="text-slate-500 text-sm">%</span>
                             </div>
-                            <button
-                                onClick={() => setShowGradingEditor(false)}
-                                className="p-2 bg-slate-100 dark:bg-slate-700/50 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
+                        ))}
+                    </div>
 
-                        <div className="space-y-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
-                            {schoolGrading.grades.map((grade, idx) => (
-                                <div key={grade.label} className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700/50">
-                                    <span className={`font-bold w-10 text-center ${getGradeColor(grade.label)}`}>{grade.label}</span>
-                                    <input
-                                        type="number"
-                                        value={grade.minPercent}
-                                        onChange={(e) => {
-                                            const newGrades = [...schoolGrading.grades];
-                                            newGrades[idx] = { ...grade, minPercent: parseFloat(e.target.value) || 0 };
-                                            setSchoolGrading({ ...schoolGrading, grades: newGrades });
-                                        }}
-                                        className="w-20 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1.5 text-sm text-center text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-purple-500/20 outline-none"
-                                    />
-                                    <span className="text-slate-400">-</span>
-                                    <input
-                                        type="number"
-                                        value={grade.maxPercent}
-                                        onChange={(e) => {
-                                            const newGrades = [...schoolGrading.grades];
-                                            newGrades[idx] = { ...grade, maxPercent: parseFloat(e.target.value) || 0 };
-                                            setSchoolGrading({ ...schoolGrading, grades: newGrades });
-                                        }}
-                                        className="w-20 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1.5 text-sm text-center text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-purple-500/20 outline-none"
-                                    />
-                                    <span className="text-slate-500 text-sm">%</span>
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="flex gap-4 mt-8 pt-6 border-t border-slate-100 dark:border-slate-700">
-                            <button
-                                onClick={() => setSchoolGrading(DEFAULT_SCHOOL_GRADING)}
-                                className="flex-1 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl text-sm font-medium transition-all shadow-sm"
-                            >
-                                Reset to Default
-                            </button>
-                            <button
-                                onClick={() => setShowGradingEditor(false)}
-                                className="flex-1 px-4 py-2.5 bg-slate-900 dark:bg-blue-600 hover:bg-slate-800 dark:hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-all shadow-md hover:shadow-lg"
-                            >
-                                Done
-                            </button>
-                        </div>
+                    <div className="flex gap-4 mt-8 pt-6 border-t border-slate-100 dark:border-slate-700">
+                        <Button
+                            onClick={() => setSchoolGrading(DEFAULT_SCHOOL_GRADING)}
+                            variant="secondary"
+                            className="flex-1"
+                        >
+                            Reset to Default
+                        </Button>
+                        <Button
+                            onClick={() => setShowGradingEditor(false)}
+                            className="flex-1 bg-slate-900 dark:bg-blue-600 hover:bg-slate-800 dark:hover:bg-blue-700"
+                        >
+                            Done
+                        </Button>
                     </div>
                 </div>
-            )}
+            </Modal>
         </div>
     );
 };

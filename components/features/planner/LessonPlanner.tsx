@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../../../context/AppContext';
 import { Calendar, Plus, Link as LinkIcon, Trash2, ExternalLink, ChevronRight, ChevronLeft, X, BookOpen, FileText, Video, Image as ImageIcon, AlertCircle, Sparkles, Loader2 } from 'lucide-react';
-import { Lesson, LessonResource, ResourceType } from '../types';
-import { generateLessonPlan } from '../services/geminiService';
+import { Lesson, LessonResource, ResourceType } from '../../../types';
+import { generateLessonPlan } from '../../../services/geminiService';
 
 const LessonPlanner: React.FC = () => {
     const { lessons, classes, syllabusTopics, curriculums, addLesson, updateLesson, deleteLesson, fetchLessons, fetchSyllabusTopics, fetchClasses, fetchCurriculums } = useAppContext();

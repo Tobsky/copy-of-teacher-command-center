@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { Upload, FileSpreadsheet, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
-import { useAppContext } from '../context/AppContext';
-import { ClassGroup, Student, Assignment } from '../types';
-import { supabase } from '../supabaseClient';
+import { useAppContext } from '../../../context/AppContext';
+import { ClassGroup, Student, Assignment } from '../../../types';
+import { supabase } from '../../../supabaseClient';
 
 interface ExcelImporterProps {
     onImportComplete: () => void;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Student, ClassGroup, Grade, Assignment, AttendanceRecord } from '../types';
+import { Student, ClassGroup, Grade, Assignment, AttendanceRecord } from '../../../types';
 import { School, CheckCircle, Clock, XCircle, Calendar } from 'lucide-react';
 
 interface ReportCardProps {
