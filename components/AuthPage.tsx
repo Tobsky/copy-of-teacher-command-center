@@ -55,6 +55,7 @@ const AuthPage: React.FC = () => {
                     email,
                     password,
                     options: {
+                        emailRedirectTo: `${window.location.origin}/`,
                         data: {
                             full_name: fullName,
                         },
