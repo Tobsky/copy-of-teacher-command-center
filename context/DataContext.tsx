@@ -16,6 +16,7 @@ import { snippetService, todoService } from '../services/utilityService';
 import { lessonService } from '../services/lessonService';
 import { examBoardService } from '../services/examBoardService';
 import { syllabusService } from '../services/syllabusService';
+import { feedbackService } from '../services/feedbackService';
 
 interface DataContextType {
     classes: ClassGroup[];
@@ -88,6 +89,7 @@ interface DataContextType {
     deleteCurriculum: (id: string) => Promise<void>;
 
     upsertSyllabusProgress: (progress: Omit<SyllabusProgress, 'id'>) => Promise<void>;
+    submitUserFeedback: (type: 'bug' | 'feature_request' | 'general' | 'other', message: string, contactEmail?: string) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -517,6 +519,13 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         } catch (error) { console.error(error); }
     };
 
+    const submitUserFeedback = async (type: 'bug' | 'feature_request' | 'general' | 'other', message: string, contactEmail?: string) => {
+        if (!session) return;
+        try {
+            await feedbackService.submitFeedback({ type, message, contactEmail, userId: session.user.id }, session.user.id);
+        } catch (error) { console.error("Failed to submit feedback:", error); throw error; }
+    };
+
     return (
         <DataContext.Provider value={{
             classes, students, assignments, grades, attendance, snippets, todos, lessons, examBoards, syllabusTopics, curriculums, syllabusProgress,
@@ -532,7 +541,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             addExamBoard, updateExamBoard, deleteExamBoard, restoreDefaultExamBoards,
             addSyllabusTopic, updateSyllabusTopic, deleteSyllabusTopic,
             addCurriculum, updateCurriculum, deleteCurriculum,
-            upsertSyllabusProgress
+            upsertSyllabusProgress,
+            submitUserFeedback
         }}>
             {children}
         </DataContext.Provider>

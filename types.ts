@@ -116,6 +116,16 @@ export interface SyllabusProgress {
   updatedAt?: string;
 }
 
+export interface UserFeedback {
+  id: string;
+  userId: string;
+  type: 'bug' | 'feature_request' | 'general' | 'other';
+  message: string;
+  contactEmail?: string;
+  status: 'new' | 'reviewed' | 'resolved';
+  createdAt: string;
+}
+
 export enum AppView {
   DASHBOARD = 'DASHBOARD',
   CLASSES = 'CLASSES',

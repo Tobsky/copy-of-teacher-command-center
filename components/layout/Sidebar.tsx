@@ -12,12 +12,15 @@ import {
   Calculator,
   Sun,
   Moon,
-  Calendar
+  Calendar,
+  MessageSquare
 } from 'lucide-react';
-import { useAppContext } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
+import { useSession } from '../../context/SessionContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import SessionManager from '../features/sessions/SessionManager';
+import { UserFeedbackModal } from '../features/feedback/UserFeedbackModal';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -25,11 +28,12 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
-  const { logout, activeSession } = useAppContext();
+  const { logout } = useAuth();
+  const { activeSession, setShowSessionManager } = useSession();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
-  const [showSessionManager, setShowSessionManager] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   const navItems = [
     { path: '/', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
@@ -153,12 +157,19 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
             <span className="text-xs font-medium text-slate-400">System Online</span>
           </div>
+
+          {/* Feedback Button */}
+          <button
+            onClick={() => setIsFeedbackOpen(true)}
+            className="w-full flex items-center justify-center gap-2 py-3 mt-4 text-xs font-bold uppercase tracking-wider text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors border-t border-slate-100 dark:border-slate-800"
+          >
+            <MessageSquare size={14} /> Report Issue
+          </button>
         </div>
 
+        <UserFeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
+
         {/* Session Manager Modal */}
-        {showSessionManager && (
-          <SessionManager onClose={() => setShowSessionManager(false)} />
-        )}
 
       </div>
     </>

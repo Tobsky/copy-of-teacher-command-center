@@ -484,3 +484,27 @@ $$;
 
 -- Grant permission so anyone (including logged out users) can check if email exists
 GRANT EXECUTE ON FUNCTION public.email_exists(text) TO anon, authenticated;
+-- ============================================================
+-- 11. USER FEEDBACK TABLE
+-- ============================================================
+create table public.user_feedback (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users not null,
+  type text check (type in ('bug', 'feature_request', 'general', 'other')) not null,
+  message text not null,
+  contact_email text,
+  status text default 'new' check (status in ('new', 'reviewed', 'resolved')),
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table public.user_feedback enable row level security;
+
+create policy "Users can view their own feedback"
+on public.user_feedback for select
+using (auth.uid() = user_id);
+
+create policy "Users can insert their own feedback"
+on public.user_feedback for insert
+with check (auth.uid() = user_id);
+
+-- End of Schema
