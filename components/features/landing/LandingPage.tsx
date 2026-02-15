@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import * as React from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
     CheckCircle,
     ArrowRight,
@@ -20,6 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../../context/ThemeContext';
 import { Modal } from '../../ui/Modal';
 import AIChatWidget from './AIChatWidget';
+import { trackEvent } from '../../../services/analyticsService';
 
 // Hook for scroll detection
 function useOnScreen(ref: React.RefObject<HTMLElement>) {
@@ -272,6 +274,7 @@ const LandingPage: React.FC = () => {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isDemoOpen, setIsDemoOpen] = useState(false);
+    const [isBetaModalOpen, setIsBetaModalOpen] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -641,7 +644,10 @@ const LandingPage: React.FC = () => {
                                 <PricingItem text="Bulk Excel Import" />
                             </div>
                             <button
-                                onClick={() => navigate('/login?mode=signup')}
+                                onClick={() => {
+                                    trackEvent('click_get_pro_beta', { location: 'pricing_table' });
+                                    setIsBetaModalOpen(true);
+                                }}
                                 className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold shadow-lg shadow-indigo-900/50 transition-all relative z-10"
                             >
                                 Get Pro
@@ -653,6 +659,30 @@ const LandingPage: React.FC = () => {
 
                     </div>
                 </div>
+
+                {/* Beta Access Modal */}
+                <Modal isOpen={isBetaModalOpen} onClose={() => setIsBetaModalOpen(false)} title="🎉 You're an Early Adopter!" size="md">
+                    <div className="text-center space-y-6 py-4">
+                        <div className="w-20 h-20 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center mx-auto text-4xl animate-bounce">
+                            🎁
+                        </div>
+                        <div className="space-y-2">
+                            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Pro Access is currently FREE!</h3>
+                            <p className="text-slate-600 dark:text-slate-400">
+                                As a thank you for joining us during our Beta launch, we've upgraded your account to the <b>Pro Teacher</b> tier at no cost.
+                            </p>
+                        </div>
+                        <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl text-sm text-slate-500 dark:text-slate-400">
+                            Enjoy unlimited AI reports, grade curving, and more on us. No credit card required.
+                        </div>
+                        <button
+                            onClick={() => navigate('/login?mode=signup')}
+                            className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold shadow-lg shadow-indigo-600/20 hover:shadow-indigo-600/40 hover:-translate-y-1 transition-all"
+                        >
+                            Claim Free Pro Access
+                        </button>
+                    </div>
+                </Modal>
             </section>
 
             {/* Footer */}
