@@ -204,3 +204,37 @@ export const generateLessonPlan = async (
     return null;
   }
 };
+
+import { AI_AGENT_SYSTEM_PROMPT } from "../utils/aiAgentSystemPrompt";
+
+export interface ChatMessage {
+  role: 'user' | 'model';
+  parts: { text: string }[];
+}
+
+export const getChatResponse = async (
+  history: ChatMessage[],
+  newMessage: string
+): Promise<string> => {
+  const ai = getAIClient();
+  if (!ai) return "Error: API Key is missing.";
+
+  try {
+    const chat = ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      config: {
+        systemInstruction: AI_AGENT_SYSTEM_PROMPT,
+      },
+      contents: [
+        ...history,
+        { role: 'user', parts: [{ text: newMessage }] }
+      ]
+    });
+
+    const result = await chat;
+    return result.text || "I'm sorry, I couldn't generate a response.";
+  } catch (error) {
+    console.error("Gemini Chat Error:", error);
+    return "I'm having trouble connecting right now. Please try again.";
+  }
+};

@@ -19,6 +19,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../../context/ThemeContext';
 import { Modal } from '../../ui/Modal';
+import AIChatWidget from './AIChatWidget';
 
 // Hook for scroll detection
 function useOnScreen(ref: React.RefObject<HTMLElement>) {
@@ -299,6 +300,8 @@ const LandingPage: React.FC = () => {
             <Modal isOpen={isDemoOpen} onClose={() => setIsDemoOpen(false)} title="Product Tour" size="lg">
                 <DemoCarousel />
             </Modal>
+
+            <AIChatWidget />
 
             {/* Navigation */}
             <nav className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-sm py-4' : 'bg-transparent py-6'}`}>
